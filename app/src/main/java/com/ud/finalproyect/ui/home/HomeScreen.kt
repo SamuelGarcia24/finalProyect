@@ -1,6 +1,7 @@
 package com.ud.finalproyect.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,45 +23,55 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.ud.finalproyect.data.Medication
 
 @Composable
 fun HomeScreen(
+    navController: NavController,
     viewModel: HomeViewModel = viewModel()
 ) {
     val medications by viewModel.medications.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "Medications today",
-            fontSize = 22.sp,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Medications today",
+                fontSize = 22.sp,
+                color = MaterialTheme.colorScheme.primary
+            )
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        if (medications.isEmpty()) {
-            Text("No medications for today")
-        } else {
-            LazyColumn {
-                items(medications) { medication ->
-                    MedicationItem(medication = medication)
-                    Spacer(modifier = Modifier.height(8.dp))
+            if (medications.isEmpty()) {
+                Text("No medications for today")
+            } else {
+                LazyColumn {
+                    items(medications) { medication ->
+                        MedicationItem(medication = medication)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        Button(
-            onClick = { viewModel.onShowMore() },
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        ) {
-            Text("Show more")
+            Button(
+                onClick = {
+                    // Navegar a la pantalla de Diary
+                    navController.navigate("Diary")
+                }
+            ) {
+                Text("See details")
+            }
         }
     }
 }

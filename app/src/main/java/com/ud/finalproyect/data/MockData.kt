@@ -16,14 +16,3 @@ fun getMockMedications(): List<Medication> {
         Medication(3, "Loratadina", "10mg", "2:30 PM", "🟢")
     )
 }
-
-// Más medicamentos para "Show more"
-fun getMoreMockMedications(): List<Medication> {
-    return listOf(
-        Medication(4, "Paracetamol", "500mg", "8:00 AM", "🟢"),
-        Medication(5, "Omeprazol", "20mg", "9:00 AM", "🔴"),
-        Medication(6, "Metformina", "850mg", "10:30 AM", "🟢"),
-        Medication(7, "Losartán", "50mg", "1:00 PM", "🔴"),
-        Medication(8, "Aspirina", "100mg", "6:00 PM", "🟢")
-    )
-}
