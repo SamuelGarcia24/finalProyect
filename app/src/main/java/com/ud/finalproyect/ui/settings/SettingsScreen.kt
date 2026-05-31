@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(onSignOut: () -> Unit = {}) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Sección de Perfil
         Card(

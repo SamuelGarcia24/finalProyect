@@ -1,4 +1,4 @@
-package com.ud.finalproyect.ui.history
+package com.ud.finalproyect.viewmodel
 
 import androidx.lifecycle.ViewModel
 

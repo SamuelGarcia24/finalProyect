@@ -1,4 +1,4 @@
-package com.ud.finalproyect.ui.calendar
+package com.ud.finalproyect.viewmodel
 
 import androidx.lifecycle.ViewModel
 

@@ -1,0 +1,44 @@
+package com.ud.finalproyect.viewmodel
+
+import androidx.lifecycle.ViewModel
+import com.ud.finalproyect.data.Medication
+import com.ud.finalproyect.data.MedicationRepository
+import java.time.LocalDate
+
+class AddMedicationViewModel : ViewModel() {
+
+    private val repository = MedicationRepository()
+
+    fun saveMedication(
+        userId: String,
+        name: String,
+        doseValue: String,
+        doseUnit: String,
+        intervalHours: Int,
+        intervalMinutes: Int,
+        startTime: String,
+        durationDays: Int
+    ) {
+        val today = LocalDate.now()
+        val endDate = today.plusDays(durationDays.toLong())
+        val frequency = "Cada ${intervalHours}h ${intervalMinutes}m"
+
+        val medication = Medication(
+            userId = userId,
+            name = name,
+            dose = "$doseValue$doseUnit",
+            doseUnit = doseUnit,
+            frequency = frequency,
+            intervalHours = intervalHours,
+            intervalMinutes = intervalMinutes,
+            startTime = startTime,
+            durationDays = durationDays,
+            startDate = today.toString(),
+            endDate = endDate.toString(),
+            isActive = true,
+            status = "Pendiente"
+        )
+
+        repository.saveMedication(medication)
+    }
+}
