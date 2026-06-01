@@ -14,5 +14,6 @@ data class Medication(
     val startDate: String = "",
     val endDate: String = "",
     val isActive: Boolean = true,
-    val status: String = "Pendiente"
+    val status: String = "Pendiente",
+    val takenDates: List<String> = emptyList()
 )

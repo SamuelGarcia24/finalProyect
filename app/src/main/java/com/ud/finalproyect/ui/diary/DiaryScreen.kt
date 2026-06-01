@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ud.finalproyect.data.Medication
 import com.ud.finalproyect.viewmodel.DiaryViewModel
 import java.time.LocalDate
 
@@ -28,6 +29,7 @@ import java.time.LocalDate
 @Composable
 fun DiaryScreen(
     userId: String,
+    modifier: Modifier = Modifier,
     viewModel: DiaryViewModel = viewModel()
 ) {
     val medications by viewModel.medications.collectAsState()
@@ -35,7 +37,7 @@ fun DiaryScreen(
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
 
     LaunchedEffect(userId) {
-        viewModel.loadForUser(userId)
+        if (userId.isNotEmpty()) viewModel.loadForUser(userId)
     }
 
     val medicationsForDate = remember(selectedDate, medications) {
@@ -43,11 +45,13 @@ fun DiaryScreen(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp)
     ) {
-        // Selector de fecha horizontal
+        Spacer(modifier = Modifier.height(8.dp))
+
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
@@ -79,7 +83,7 @@ fun DiaryScreen(
                             text = date.dayOfMonth.toString(),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = if (isSelected) Color.White else Color.Black
+                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -99,69 +103,88 @@ fun DiaryScreen(
                 )
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
+            ) {
                 items(medicationsForDate) { med ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min)
-                    ) {
-                        // Línea de tiempo
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Box(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.primary,
-                                        CircleShape
-                                    )
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .width(2.dp)
-                                    .background(Color.LightGray)
-                            )
+                    DiaryMedicationItem(
+                        medication = med,
+                        isTaken = med.takenDates.contains(selectedDate.toString()),
+                        onToggle = { id ->
+                            viewModel.toggleTaken(id, selectedDate.toString())
                         }
+                    )
+                }
+            }
+        }
+    }
+}
 
-                        // Tarjeta del medicamento
-                        Card(
-                            modifier = Modifier
-                                .padding(start = 16.dp, bottom = 16.dp)
-                                .fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(4.dp),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = med.name,
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "${med.dose} - ${med.startTime}",
-                                        color = Color.Gray
-                                    )
-                                }
-                                Icon(
-                                    imageVector = if (med.status == "Tomado")
-                                        Icons.Default.CheckCircle
-                                    else
-                                        Icons.Default.RadioButtonUnchecked,
-                                    contentDescription = null,
-                                    tint = if (med.status == "Tomado")
-                                        Color.Green
-                                    else
-                                        MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                        }
-                    }
+@Composable
+fun DiaryMedicationItem(
+    medication: Medication,
+    isTaken: Boolean,
+    onToggle: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(2.dp)
+                    .background(Color.LightGray)
+            )
+        }
+
+        Card(
+            modifier = Modifier
+                .padding(start = 16.dp, bottom = 16.dp)
+                .fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(4.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = medication.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${medication.dose} · ${medication.startTime}",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = medication.frequency,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                IconButton(onClick = { onToggle(medication.id) }) {
+                    Icon(
+                        imageVector = if (isTaken)
+                            Icons.Default.CheckCircle
+                        else
+                            Icons.Default.RadioButtonUnchecked,
+                        contentDescription = "Mark as taken",
+                        tint = if (isTaken) Color.Green else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
         }

@@ -116,8 +116,11 @@ fun NavGraph(authViewModel: AuthViewModel = viewModel()) {
                     }
                 },
                 onFabClick = { navController.navigate("add_medication") }
-            ) {
-                DiaryScreen(userId = user?.uid ?: "")
+            ) { innerPadding ->
+                DiaryScreen(
+                    userId = user?.uid ?: "",
+                    modifier = Modifier.padding(innerPadding)
+                )
             }
         }
 

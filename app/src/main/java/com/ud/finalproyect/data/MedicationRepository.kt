@@ -35,4 +35,13 @@ class MedicationRepository {
         val key = medicationsRef.push().key ?: return
         medicationsRef.child(key).setValue(medication.copy(id = key))
     }
+
+    fun toggleTaken(medicationId: String, date: String, currentTakenDates: List<String>) {
+        val updated = if (currentTakenDates.contains(date)) {
+            currentTakenDates - date
+        } else {
+            currentTakenDates + date
+        }
+        medicationsRef.child(medicationId).child("takenDates").setValue(updated)
+    }
 }

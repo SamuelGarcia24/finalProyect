@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.ud.finalproyect.navigation.Screen
 import com.ud.finalproyect.viewmodel.AddMedicationViewModel
 import java.util.Calendar
 
@@ -95,8 +96,9 @@ fun AddMedicationScreen(
 
     LaunchedEffect(savedSuccess) {
         if (savedSuccess) {
-            snackbarHostState.showSnackbar("Medication saved successfully")
-            navController.navigateUp()
+            navController.navigate(Screen.Home.route) {
+                popUpTo("add_medication") { inclusive = true }
+            }
         }
     }
 

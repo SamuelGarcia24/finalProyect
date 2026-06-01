@@ -36,4 +36,9 @@ class DiaryViewModel(private val userId: String = "") : ViewModel() {
             med.startDate <= date && med.endDate >= date
         }
     }
+
+    fun toggleTaken(medicationId: String, date: String) {
+        val medication = _medications.value.find { it.id == medicationId } ?: return
+        repository.toggleTaken(medicationId, date, medication.takenDates)
+    }
 }
