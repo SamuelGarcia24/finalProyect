@@ -1,24 +1,31 @@
 package com.ud.finalproyect.ui.addmedication
 
 import android.app.TimePickerDialog
-import android.widget.TimePicker
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.ud.finalproyect.navigation.Screen
 import com.ud.finalproyect.viewmodel.AddMedicationViewModel
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,94 +34,42 @@ fun AddMedicationScreen(
     userId: String,
     viewModel: AddMedicationViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    
+    // Obtenemos la hora actual y un formateador para AM/PM
+    val calendarInstance = remember { Calendar.getInstance() }
+    val timeFormatter = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
+    
+    // Estados del formulario
     var name by remember { mutableStateOf("") }
-    var nameError by remember { mutableStateOf(false) }
-
     var doseValue by remember { mutableStateOf("") }
     var doseUnit by remember { mutableStateOf("mg") }
-    val doseUnits = listOf("mg", "g", "ml", "µg")
-    var doseError by remember { mutableStateOf(false) }
-
-    var intervalHours by remember { mutableStateOf(0) }
-    var intervalMinutes by remember { mutableStateOf(0) }
-    var intervalText by remember { mutableStateOf("Select time") }
-    var intervalError by remember { mutableStateOf(false) }
-
-    var startHours by remember { mutableStateOf(0) }
-    var startMinutes by remember { mutableStateOf(0) }
-    var startText by remember { mutableStateOf("Select time") }
-    var startError by remember { mutableStateOf(false) }
-
+    
+    // Frecuencia: inicia vacía para que el usuario no tenga que borrar valores por defecto
+    var frequencyValue by remember { mutableStateOf("") }
+    var frequencyUnit by remember { mutableStateOf("Horas") }
+    val frequencyUnits = listOf("Horas", "Días", "Semanas")
+    
+    // Hora de inicio: inicia con la hora actual formateada en AM/PM
+    var startText by remember { mutableStateOf(timeFormatter.format(calendarInstance.time)) }
     var duration by remember { mutableStateOf("") }
-    var durationError by remember { mutableStateOf(false) }
 
-    var savedSuccess by remember { mutableStateOf(false) }
-
-    val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    val isFormValid = run {
-        val nameValid = name.trim().length >= 2
-        val doseValid = doseValue.isNotEmpty() && doseValue.toIntOrNull() != null && doseValue.toInt() > 0
-        val intervalValid = intervalText != "Select time"
-        val startValid = startText != "Select time"
-        val durationValid = duration.isNotEmpty() && duration.toIntOrNull() != null && duration.toInt() in 1..365
-        nameValid && doseValid && intervalValid && startValid && durationValid
-    }
-
-    fun showIntervalTimePicker() {
-        val calendar = Calendar.getInstance()
-        TimePickerDialog(
-            context,
-            { _: TimePicker, hourOfDay: Int, minute: Int ->
-                intervalHours = hourOfDay
-                intervalMinutes = minute
-                intervalText = String.format("%02d:%02d", hourOfDay, minute)
-                intervalError = false
-            },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            true
-        ).show()
-    }
-
-    fun showStartTimePicker() {
-        val calendar = Calendar.getInstance()
-        TimePickerDialog(
-            context,
-            { _: TimePicker, hourOfDay: Int, minute: Int ->
-                startHours = hourOfDay
-                startMinutes = minute
-                startText = String.format("%02d:%02d", hourOfDay, minute)
-                startError = false
-            },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            true
-        ).show()
-    }
-
-    LaunchedEffect(savedSuccess) {
-        if (savedSuccess) {
-            navController.navigate(Screen.Home.route) {
-                popUpTo("add_medication") { inclusive = true }
-            }
-        }
-    }
+    val isFormValid = name.isNotBlank() && doseValue.isNotBlank() && 
+                      frequencyValue.isNotBlank() && duration.isNotBlank()
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = { Text("Add Medication") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
+            CenterAlignedTopAppBar(
+                title = { Text("Nuevo Medicamento", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent
+                )
             )
         }
     ) { innerPadding ->
@@ -122,140 +77,231 @@ fun AddMedicationScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .verticalScroll(scrollState)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = {
-                    name = it
-                    nameError = it.trim().length < 2 && it.isNotEmpty()
-                },
-                label = { Text("Medication Name") },
-                isError = nameError,
-                supportingText = { if (nameError) Text("Minimum 2 characters") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = doseValue,
-                    onValueChange = {
-                        if (it.isEmpty() || it.all { c -> c.isDigit() }) {
-                            doseValue = it
-                            doseError = it.isNotEmpty() && (it.toIntOrNull() == null || it.toInt() <= 0)
-                        }
-                    },
-                    label = { Text("Dose") },
-                    isError = doseError,
-                    supportingText = { if (doseError) Text("Enter a positive number") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
+            // Sección: Información Básica
+            InfoSection(title = "Información General") {
+                CustomTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = "Nombre del medicamento",
+                    icon = Icons.Default.Medication,
+                    placeholder = "Ej: Ibuprofeno"
                 )
-
-                var expanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
-                    TextField(
-                        value = doseUnit,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier
-                            .width(80.dp)
-                            .menuAnchor(),
-                        shape = MaterialTheme.shapes.small
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    CustomTextField(
+                        value = doseValue,
+                        onValueChange = { if (it.all { char -> char.isDigit() }) doseValue = it },
+                        label = "Dosis",
+                        icon = Icons.Default.Scale,
+                        modifier = Modifier.weight(1f),
+                        keyboardType = KeyboardType.Number
                     )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        doseUnits.forEach { unit ->
-                            DropdownMenuItem(
-                                text = { Text(unit) },
-                                onClick = {
-                                    doseUnit = unit
-                                    expanded = false
-                                }
-                            )
+                    
+                    var expanded by remember { mutableStateOf(false) }
+                    Box(modifier = Modifier.padding(top = 8.dp)) {
+                        FilterChip(
+                            selected = true,
+                            onClick = { expanded = true },
+                            label = { Text(doseUnit) },
+                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) }
+                        )
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            listOf("mg", "g", "ml", "gotas").forEach { unit ->
+                                DropdownMenuItem(text = { Text(unit) }, onClick = {
+                                    doseUnit = unit; expanded = false
+                                })
+                            }
                         }
                     }
                 }
             }
 
-            OutlinedTextField(
-                value = intervalText,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Interval (HH:MM)") },
-                isError = intervalError,
-                supportingText = { if (intervalError) Text("Select an interval") },
-                trailingIcon = {
-                    IconButton(onClick = { showIntervalTimePicker() }) {
-                        Icon(Icons.Default.AccessTime, contentDescription = "Select interval")
+            // Sección: Horarios Flexible (soporta Horas, Días, Semanas)
+            InfoSection(title = "Configuración de Horarios") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CustomTextField(
+                        value = frequencyValue,
+                        onValueChange = { if (it.all { char -> char.isDigit() }) frequencyValue = it },
+                        label = "Cada cuanto",
+                        icon = Icons.Default.Update,
+                        modifier = Modifier.weight(1f),
+                        keyboardType = KeyboardType.Number,
+                        placeholder = "Ej: 8"
+                    )
+                    
+                    var unitExpanded by remember { mutableStateOf(false) }
+                    Box(modifier = Modifier.padding(top = 8.dp)) {
+                        FilterChip(
+                            selected = true,
+                            onClick = { unitExpanded = true },
+                            label = { Text(frequencyUnit) },
+                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) }
+                        )
+                        DropdownMenu(expanded = unitExpanded, onDismissRequest = { unitExpanded = false }) {
+                            frequencyUnits.forEach { unit ->
+                                DropdownMenuItem(text = { Text(unit) }, onClick = {
+                                    frequencyUnit = unit; unitExpanded = false
+                                })
+                            }
+                        }
                     }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+                }
 
-            OutlinedTextField(
-                value = startText,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Start Time (HH:MM)") },
-                isError = startError,
-                supportingText = { if (startError) Text("Select a start time") },
-                trailingIcon = {
-                    IconButton(onClick = { showStartTimePicker() }) {
-                        Icon(Icons.Default.AccessTime, contentDescription = "Select start time")
+                Spacer(modifier = Modifier.height(12.dp))
+
+                TimePickerField(
+                    label = "Hora de la primera toma",
+                    value = startText,
+                    icon = Icons.Default.AccessTime,
+                    onClick = {
+                        val calendar = Calendar.getInstance()
+                        TimePickerDialog(context, { _, h, m -> 
+                            val selectedCal = Calendar.getInstance()
+                            selectedCal.set(Calendar.HOUR_OF_DAY, h)
+                            selectedCal.set(Calendar.MINUTE, m)
+                            startText = timeFormatter.format(selectedCal.time)
+                        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), false).show()
                     }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+                )
+            }
 
-            OutlinedTextField(
-                value = duration,
-                onValueChange = {
-                    if (it.isEmpty() || it.all { c -> c.isDigit() }) {
-                        duration = it
-                        val d = it.toIntOrNull()
-                        durationError = d != null && (d < 1 || d > 365)
-                    }
-                },
-                label = { Text("Duration (days)") },
-                isError = durationError,
-                supportingText = { if (durationError) Text("Enter days between 1 and 365") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Sección: Duración
+            InfoSection(title = "Duración del Tratamiento") {
+                CustomTextField(
+                    value = duration,
+                    onValueChange = { if (it.all { char -> char.isDigit() }) duration = it },
+                    label = "Número de días",
+                    icon = Icons.Default.CalendarToday,
+                    placeholder = "Ej: 7",
+                    keyboardType = KeyboardType.Number
+                )
+            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+            // Botón de Guardar: incluye cálculo de intervalo y salida de pantalla
             Button(
                 onClick = {
+                    val fVal = frequencyValue.toIntOrNull() ?: 0
+                    // Calculamos el intervalo base en horas para la lógica interna
+                    val totalHours = when (frequencyUnit) {
+                        "Días" -> fVal * 24
+                        "Semanas" -> fVal * 24 * 7
+                        else -> fVal
+                    }
+                    val frequencyString = "Cada $frequencyValue ${frequencyUnit.lowercase()}"
+
                     viewModel.saveMedication(
                         userId = userId,
                         name = name,
                         doseValue = doseValue,
                         doseUnit = doseUnit,
-                        intervalHours = intervalHours,
-                        intervalMinutes = intervalMinutes,
+                        frequency = frequencyString,
+                        intervalHours = totalHours,
+                        intervalMinutes = 0,
                         startTime = startText,
-                        durationDays = duration.toInt()
+                        durationDays = duration.toIntOrNull() ?: 1
                     )
-                    savedSuccess = true
+                    // Salimos de la pantalla inmediatamente tras guardar
+                    navController.popBackStack()
                 },
                 enabled = isFormValid,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(4.dp)
             ) {
-                Text("Save Medication")
+                Icon(Icons.Default.Save, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Guardar Medicamento", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
+        }
+    }
+}
+
+@Composable
+fun InfoSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Column {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                content()
+            }
+        }
+    }
+}
+
+@Composable
+fun CustomTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        leadingIcon = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = Color.Transparent
+        )
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerField(label: String, value: String, icon: ImageVector, onClick: () -> Unit) {
+    OutlinedCard(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.outlinedCardColors(containerColor = Color.White)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.outline)
         }
     }
 }

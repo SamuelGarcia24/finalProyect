@@ -14,6 +14,7 @@ class AddMedicationViewModel : ViewModel() {
         name: String,
         doseValue: String,
         doseUnit: String,
+        frequency: String,
         intervalHours: Int,
         intervalMinutes: Int,
         startTime: String,
@@ -21,7 +22,6 @@ class AddMedicationViewModel : ViewModel() {
     ) {
         val today = LocalDate.now()
         val endDate = today.plusDays(durationDays.toLong())
-        val frequency = "Cada ${intervalHours}h ${intervalMinutes}m"
 
         val medication = Medication(
             userId = userId,

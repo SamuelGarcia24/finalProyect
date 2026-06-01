@@ -1,10 +1,6 @@
 package com.ud.finalproyect.ui.settings
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
@@ -12,23 +8,23 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ud.finalproyect.viewmodel.AuthViewModel
 
 @Composable
-fun SettingsScreen(onSignOut: () -> Unit = {}) {
+fun SettingsScreen(
+    onSignOut: () -> Unit = {},
+    authViewModel: AuthViewModel = viewModel()
+) {
+    val user by authViewModel.user.collectAsState()
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Sección de Perfil
         Card(
@@ -40,18 +36,43 @@ fun SettingsScreen(onSignOut: () -> Unit = {}) {
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(48.dp))
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primary
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.Person, 
+                            contentDescription = null, 
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text("Anderson Piratoba", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("anderson@example.com", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        text = user?.displayName ?: "Usuario", 
+                        style = MaterialTheme.typography.titleMedium, 
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = user?.email ?: "Sin correo", 
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("General Settings", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        Text(
+            text = "Ajustes Generales", 
+            style = MaterialTheme.typography.labelLarge, 
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Opción: Notificaciones
         SettingItem(title = "Notificaciones", icon = Icons.Default.Notifications, hasSwitch = true)
@@ -66,13 +87,15 @@ fun SettingsScreen(onSignOut: () -> Unit = {}) {
 
         // Botón Cerrar Sesión
         Button(
-            onClick = { /* Lógica de Logout */ },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-            shape = RoundedCornerShape(12.dp)
+            onClick = { onSignOut() },
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Cerrar Sesión", color = Color.White)
+            Text("Cerrar Sesión", fontWeight = FontWeight.Bold)
         }
+        
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

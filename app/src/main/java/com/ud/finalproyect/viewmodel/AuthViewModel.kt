@@ -28,6 +28,46 @@ class AuthViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    fun signInWithEmail(email: String, pass: String) {
+        if (email.isBlank() || pass.isBlank()) {
+            _error.value = "Por favor completa todos los campos"
+            return
+        }
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            auth.signInWithEmailAndPassword(email, pass)
+                .addOnSuccessListener { authResult ->
+                    _user.value = authResult.user
+                    _isLoading.value = false
+                }
+                .addOnFailureListener { e ->
+                    _error.value = "Error al iniciar sesión: ${e.localizedMessage}"
+                    _isLoading.value = false
+                }
+        }
+    }
+
+    fun signUpWithEmail(email: String, pass: String) {
+        if (email.isBlank() || pass.isBlank()) {
+            _error.value = "Por favor completa todos los campos"
+            return
+        }
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            auth.createUserWithEmailAndPassword(email, pass)
+                .addOnSuccessListener { authResult ->
+                    _user.value = authResult.user
+                    _isLoading.value = false
+                }
+                .addOnFailureListener { e ->
+                    _error.value = "Error al registrarse: ${e.localizedMessage}"
+                    _isLoading.value = false
+                }
+        }
+    }
+
     fun signInWithGoogle(context: Context, webClientId: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -60,15 +100,15 @@ class AuthViewModel : ViewModel() {
                         _isLoading.value = false
                     }
                     .addOnFailureListener { e ->
-                        _error.value = e.message
+                        _error.value = "Error Firebase: ${e.localizedMessage}"
                         _isLoading.value = false
                     }
 
             } catch (e: GetCredentialException) {
-                _error.value = "Google Sign-In failed: ${e.message}"
+                _error.value = "Error de Google: ${e.message}"
                 _isLoading.value = false
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = "Error inesperado: ${e.message}"
                 _isLoading.value = false
             }
         }
@@ -77,5 +117,9 @@ class AuthViewModel : ViewModel() {
     fun signOut() {
         auth.signOut()
         _user.value = null
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }
