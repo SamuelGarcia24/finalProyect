@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ud.finalproyect.data.Medication
+import com.ud.finalproyect.model.data.Medication
 import com.ud.finalproyect.viewmodel.DiaryViewModel
 import java.time.LocalDate
 

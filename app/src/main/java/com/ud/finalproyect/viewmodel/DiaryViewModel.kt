@@ -2,8 +2,8 @@ package com.ud.finalproyect.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ud.finalproyect.data.Medication
-import com.ud.finalproyect.data.MedicationRepository
+import com.ud.finalproyect.model.data.Medication
+import com.ud.finalproyect.model.repository.MedicationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

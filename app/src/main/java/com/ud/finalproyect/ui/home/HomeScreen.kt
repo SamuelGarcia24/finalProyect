@@ -3,6 +3,8 @@ package com.ud.finalproyect.ui.home
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.ud.finalproyect.data.Medication
+import com.ud.finalproyect.model.data.Medication
 import com.ud.finalproyect.viewmodel.HomeViewModel
 
 @Composable
@@ -58,7 +60,10 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(medications) { medication ->
-                    MedicationItem(medication = medication)
+                    MedicationItem(
+                        medication = medication,
+                        onDelete = { viewModel.deleteMedication(medication.id) }
+                    )
                 }
             }
 
@@ -75,7 +80,12 @@ fun HomeScreen(
 }
 
 @Composable
-fun MedicationItem(medication: Medication) {
+fun MedicationItem(
+    medication: Medication,
+    onDelete: () -> Unit
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium
@@ -87,7 +97,7 @@ fun MedicationItem(medication: Medication) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = medication.name,
                     fontSize = 18.sp,
@@ -99,20 +109,67 @@ fun MedicationItem(medication: Medication) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = medication.startTime,
-                    fontSize = 16.sp
-                )
-                Text(
-                    text = medication.status,
-                    fontSize = 14.sp,
-                    color = if (medication.status == "Tomado")
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = medication.startTime,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = medication.status,
+                            fontSize = 14.sp,
+                            color = if (medication.status == "Tomado")
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete medication",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
         }
+    }
+
+    // Diálogo de confirmación para eliminar
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Eliminar medicamento") },
+            text = { Text("¿Estás seguro de que deseas eliminar \"${medication.name}\"?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }

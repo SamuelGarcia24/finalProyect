@@ -2,28 +2,79 @@ package com.ud.finalproyect.ui.history
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.PendingActions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.ud.finalproyect.data.Medication
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ud.finalproyect.model.data.Medication
+import com.ud.finalproyect.viewmodel.HistoryViewModel
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryScreen() {
-    // Lista vacía por ahora — se conectará a Firebase en el siguiente paso
-    val medications = emptyList<Medication>()
-    val activeMedications = medications.filter { it.isActive }
-    val finishedMedications = medications.filter { !it.isActive }
+fun HistoryScreen(viewModel: HistoryViewModel = viewModel()) {
+    val medications by viewModel.medications.collectAsState()
+    
+    // Filtro de mes seleccionado (null significa "Todos")
+    var selectedMonth by remember { mutableStateOf<YearMonth?>(null) }
+
+    // Generar dinámicamente los últimos 12 meses
+    val filterMonths = remember {
+        val list = mutableListOf<YearMonth>()
+        var current = YearMonth.now()
+        repeat(12) {
+            list.add(current)
+            current = current.minusMonths(1)
+        }
+        list
+    }
+
+    // Filtrar medicamentos por el mes seleccionado
+    val filteredMedications = remember(medications, selectedMonth) {
+        if (selectedMonth == null) {
+            medications
+        } else {
+            medications.filter { med ->
+                try {
+                    val start = LocalDate.parse(med.startDate)
+                    val end = LocalDate.parse(med.endDate)
+                    val medStartMonth = YearMonth.from(start)
+                    val medEndMonth = YearMonth.from(end)
+                    
+                    // El medicamento está activo en el mes seleccionado si el mes está en el rango
+                    !selectedMonth!!.isBefore(medStartMonth) && !selectedMonth!!.isAfter(medEndMonth)
+                } catch (e: Exception) {
+                    false
+                }
+            }
+        }
+    }
+
+    // Agrupar los medicamentos filtrados por el mes de inicio para una visualización seccionada
+    val groupedMedications = remember(filteredMedications) {
+        filteredMedications.groupBy { med ->
+            try {
+                val start = LocalDate.parse(med.startDate)
+                YearMonth.from(start)
+            } catch (e: Exception) {
+                YearMonth.now() // Fallback
+            }
+        }.toList().sortedByDescending { it.first }
+    }
 
     Column(
         modifier = Modifier
@@ -31,41 +82,102 @@ fun HistoryScreen() {
             .padding(16.dp)
     ) {
         Text(
-            text = "Treatment History",
+            text = "Historial de Tratamientos",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        if (medications.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No treatment history yet",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+        // Barra de Filtros por Mes (Scrollable horizontal)
+        Text(
+            text = "Filtrar por mes de tratamiento",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Opción "Todos"
+            item {
+                FilterChip(
+                    selected = selectedMonth == null,
+                    onClick = { selectedMonth = null },
+                    label = { Text("Todos", fontWeight = FontWeight.Bold) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 )
             }
+
+            // Opciones de cada mes
+            items(filterMonths) { month ->
+                val monthLabel = month.month.getDisplayName(TextStyle.SHORT, Locale("es", "ES"))
+                    .replaceFirstChar { it.uppercase() }
+                val label = "$monthLabel ${month.year}"
+                
+                FilterChip(
+                    selected = selectedMonth == month,
+                    onClick = { selectedMonth = month },
+                    label = { Text(label) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (filteredMedications.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.FilterList,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.outline
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "No hay tratamientos registrados para este período",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
         } else {
+            // Lista seccionada por meses
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                modifier = Modifier.weight(1f)
             ) {
-                if (activeMedications.isNotEmpty()) {
+                groupedMedications.forEach { (month, medsInMonth) ->
                     item {
-                        SectionHeader(title = "Active Treatments", icon = Icons.Default.PendingActions)
+                        val monthName = month.month.getDisplayName(TextStyle.FULL, Locale("es", "ES"))
+                            .replaceFirstChar { it.uppercase() }
+                        Text(
+                            text = "$monthName ${month.year}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 4.dp)
+                        )
                     }
-                    items(activeMedications) { medication ->
-                        HistoryCard(medication = medication)
-                    }
-                }
-                if (finishedMedications.isNotEmpty()) {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SectionHeader(title = "Finished Treatments", icon = Icons.Default.CheckCircle)
-                    }
-                    items(finishedMedications) { medication ->
+
+                    items(medsInMonth) { medication ->
                         HistoryCard(medication = medication)
                     }
                 }
@@ -75,31 +187,18 @@ fun HistoryScreen() {
 }
 
 @Composable
-fun SectionHeader(title: String, icon: ImageVector) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 8.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
-
-@Composable
 fun HistoryCard(medication: Medication) {
-    // startDate y endDate ahora son String con formato "yyyy-MM-dd"
-    val period = "${medication.startDate} → ${medication.endDate}"
+    val formattedPeriod = remember(medication.startDate, medication.endDate) {
+        try {
+            val inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+            val outputFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.forLanguageTag("es-ES"))
+            val start = LocalDate.parse(medication.startDate, inputFormatter).format(outputFormatter)
+            val end = LocalDate.parse(medication.endDate, inputFormatter).format(outputFormatter)
+            "$start → $end"
+        } catch (e: Exception) {
+            "${medication.startDate} → ${medication.endDate}"
+        }
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -150,7 +249,7 @@ fun HistoryCard(medication: Medication) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Period: $period",
+                    text = "Periodo: $formattedPeriod",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -166,7 +265,7 @@ fun StatusBadge(isActive: Boolean) {
         shape = RoundedCornerShape(8.dp)
     ) {
         Text(
-            text = if (isActive) "ACTIVE" else "FINISHED",
+            text = if (isActive) "ACTIVO" else "FINALIZADO",
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,

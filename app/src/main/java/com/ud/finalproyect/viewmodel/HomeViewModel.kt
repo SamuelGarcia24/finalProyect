@@ -2,12 +2,11 @@ package com.ud.finalproyect.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ud.finalproyect.data.Medication
-import com.ud.finalproyect.data.MedicationRepository
+import com.ud.finalproyect.model.data.Medication
+import com.ud.finalproyect.model.repository.MedicationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 class HomeViewModel(private val userId: String = "") : ViewModel() {
 
@@ -39,5 +38,9 @@ class HomeViewModel(private val userId: String = "") : ViewModel() {
                 }
             }
         }
+    }
+
+    fun deleteMedication(medicationId: String) {
+        repository.deleteMedication(medicationId)
     }
 }

@@ -1,4 +1,6 @@
-package com.ud.finalproyect.data
+package com.ud.finalproyect.model.data
+
+import com.google.firebase.database.PropertyName
 
 data class Medication(
     val id: String = "",
@@ -13,7 +15,9 @@ data class Medication(
     val durationDays: Int = 0,
     val startDate: String = "",
     val endDate: String = "",
-    val isActive: Boolean = true,
+    @get:PropertyName("isActive")
+    @set:PropertyName("isActive")
+    var isActive: Boolean = true,
     val status: String = "Pendiente",
     val takenDates: List<String> = emptyList()
 )

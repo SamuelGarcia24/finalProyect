@@ -1,9 +1,10 @@
-package com.ud.finalproyect.data
+package com.ud.finalproyect.model.repository
 
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.ud.finalproyect.model.data.Medication
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -43,5 +44,9 @@ class MedicationRepository {
             currentTakenDates + date
         }
         medicationsRef.child(medicationId).child("takenDates").setValue(updated)
+    }
+
+    fun deleteMedication(medicationId: String) {
+        medicationsRef.child(medicationId).removeValue()
     }
 }

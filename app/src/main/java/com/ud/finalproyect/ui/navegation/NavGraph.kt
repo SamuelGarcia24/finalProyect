@@ -1,5 +1,6 @@
 package com.ud.finalproyect.navigation
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -198,7 +199,7 @@ fun MainScaffold(
     showFab: Boolean,
     onTabSelected: (String) -> Unit,
     onFabClick: () -> Unit,
-    content: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit
+    content: @Composable (PaddingValues) -> Unit
 ) {
     Scaffold(
         topBar = {

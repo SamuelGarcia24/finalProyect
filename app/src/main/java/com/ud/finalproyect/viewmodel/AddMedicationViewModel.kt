@@ -1,8 +1,8 @@
 package com.ud.finalproyect.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.ud.finalproyect.data.Medication
-import com.ud.finalproyect.data.MedicationRepository
+import com.ud.finalproyect.model.data.Medication
+import com.ud.finalproyect.model.repository.MedicationRepository
 import java.time.LocalDate
 
 class AddMedicationViewModel : ViewModel() {

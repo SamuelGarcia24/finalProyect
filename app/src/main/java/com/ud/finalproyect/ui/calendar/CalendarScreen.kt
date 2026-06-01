@@ -1,16 +1,25 @@
+@file:Suppress("DEPRECATION")
+
 package com.ud.finalproyect.ui.calendar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Medication
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Scale
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,19 +29,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.*
+import com.ud.finalproyect.viewmodel.CalendarViewModel
+import com.ud.finalproyect.model.data.ScheduledDose
 
 @Composable
-fun CalendarScreen() {
+fun CalendarScreen(viewModel: CalendarViewModel = viewModel()) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-
-    // Por ahora sin datos reales — se conectará a Firebase en el siguiente paso
-    val scheduledDates = emptyList<LocalDate>()
+    
+    val medications by viewModel.medications.collectAsState()
+    val dailyDoses = remember(selectedDate, medications) {
+        viewModel.getDosesForDate(selectedDate)
+    }
 
     Column(
         modifier = Modifier
@@ -40,7 +53,7 @@ fun CalendarScreen() {
             .padding(16.dp)
     ) {
         Text(
-            text = "Medication Calendar",
+            text = "Calendario de Medicación",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 24.dp)
@@ -62,36 +75,111 @@ fun CalendarScreen() {
                 CalendarGrid(
                     currentMonth = currentMonth,
                     selectedDate = selectedDate,
-                    scheduledDates = scheduledDates,
-                    onDateSelected = { selectedDate = it }
+                    onDateSelected = { selectedDate = it },
+                    hasMedication = { date -> viewModel.hasMedicationOnDate(date) }
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = "Schedule for ${selectedDate.dayOfMonth} ${selectedDate.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
+        // Tarjeta con información de la fecha seleccionada
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            ),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = "Calendario",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(32.dp)
+                )
+                Column {
+                    Text(
+                        text = "Tomas programadas",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = selectedDate.dayOfMonth.toString() + " de " + selectedDate.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Box(
+                    modifier = Modifier
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "${dailyDoses.size}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        if (scheduledDates.contains(selectedDate)) {
-            MedicationSummaryCard()
+        if (dailyDoses.isNotEmpty()) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(dailyDoses) { dose ->
+                    MedicationDoseCard(dose)
+                }
+            }
         } else {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 32.dp),
+                    .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "No medications scheduled for this day",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Text(
+                        text = "Sin medicamentos programados",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "No hay tomas para este día",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -108,15 +196,15 @@ fun CalendarHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = { onMonthChange(currentMonth.minusMonths(1)) }) {
-            Icon(Icons.Default.ChevronLeft, contentDescription = "Previous month")
+            Icon(Icons.Default.ChevronLeft, contentDescription = "Mes anterior")
         }
         Text(
-            text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH).replaceFirstChar { it.uppercase() }} ${currentMonth.year}",
+            text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).replaceFirstChar { it.uppercase() }} ${currentMonth.year}",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         IconButton(onClick = { onMonthChange(currentMonth.plusMonths(1)) }) {
-            Icon(Icons.Default.ChevronRight, contentDescription = "Next month")
+            Icon(Icons.Default.ChevronRight, contentDescription = "Mes siguiente")
         }
     }
 }
@@ -125,13 +213,13 @@ fun CalendarHeader(
 fun CalendarGrid(
     currentMonth: YearMonth,
     selectedDate: LocalDate,
-    scheduledDates: List<LocalDate>,
-    onDateSelected: (LocalDate) -> Unit
+    onDateSelected: (LocalDate) -> Unit,
+    hasMedication: (LocalDate) -> Boolean
 ) {
     val daysInMonth = currentMonth.lengthOfMonth()
     val firstDayOfMonth = currentMonth.atDay(1).dayOfWeek.value % 7
     val days = (1..daysInMonth).toList()
-    val dayNames = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+    val dayNames = listOf("Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb")
 
     Column {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -151,17 +239,18 @@ fun CalendarGrid(
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
-            modifier = Modifier.height(280.dp)
+            modifier = Modifier.height(260.dp)
         ) {
             items(firstDayOfMonth) { Spacer(modifier = Modifier.fillMaxSize()) }
             items(days) { day ->
                 val date = currentMonth.atDay(day)
                 val isSelected = date == selectedDate
-                val hasMedication = scheduledDates.contains(date)
+                val medScheduled = hasMedication(date)
+                
                 DayItem(
                     day = day,
                     isSelected = isSelected,
-                    hasMedication = hasMedication,
+                    hasMedication = medScheduled,
                     onClick = { onDateSelected(date) }
                 )
             }
@@ -208,32 +297,77 @@ fun DayItem(
 }
 
 @Composable
-fun MedicationSummaryCard() {
+fun MedicationDoseCard(dose: ScheduledDose) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Icono de medicamento
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Text("💊", fontSize = 24.sp)
+                Icon(
+                    imageVector = Icons.Default.Medication,
+                    contentDescription = "Medicamento",
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(28.dp)
+                )
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(text = "Medication", fontWeight = FontWeight.Bold)
-                Text(text = "08:00 AM", style = MaterialTheme.typography.bodySmall)
+
+            // Información principal
+            Column(
+                modifier = Modifier
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = dose.medicationName,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Hora
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(imageVector = Icons.Default.AccessTime, contentDescription = "Hora", modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = dose.time, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    // Dosis
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(imageVector = Icons.Default.Scale, contentDescription = "Dosis", modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = dose.dose, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
+
+            // Indicador visual de estado
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
         }
     }
 }
