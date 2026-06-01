@@ -32,9 +32,11 @@ class MedicationRepository {
         awaitClose { medicationsRef.removeEventListener(listener) }
     }
 
-    fun saveMedication(medication: Medication) {
-        val key = medicationsRef.push().key ?: return
-        medicationsRef.child(key).setValue(medication.copy(id = key))
+    fun saveMedication(medication: Medication): Medication {
+        val key = medicationsRef.push().key ?: return medication
+        val savedMedication = medication.copy(id = key)
+        medicationsRef.child(key).setValue(savedMedication)
+        return savedMedication
     }
 
     fun toggleTaken(medicationId: String, date: String, currentTakenDates: List<String>) {

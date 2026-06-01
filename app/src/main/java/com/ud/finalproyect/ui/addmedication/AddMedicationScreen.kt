@@ -26,6 +26,8 @@ import com.ud.finalproyect.viewmodel.AddMedicationViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import android.app.Application
+import java.time.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,24 +37,31 @@ fun AddMedicationScreen(
     viewModel: AddMedicationViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val application = context.applicationContext as Application
     val scrollState = rememberScrollState()
     
-    // Obtenemos la hora actual y un formateador para AM/PM
+    LaunchedEffect(Unit) {
+        viewModel.init(application)
+    }
+
     val calendarInstance = remember { Calendar.getInstance() }
     val timeFormatter = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
     
-    // Estados del formulario
     var name by remember { mutableStateOf("") }
     var doseValue by remember { mutableStateOf("") }
     var doseUnit by remember { mutableStateOf("mg") }
     
-    // Frecuencia: inicia vacía para que el usuario no tenga que borrar valores por defecto
     var frequencyValue by remember { mutableStateOf("") }
     var frequencyUnit by remember { mutableStateOf("Horas") }
     val frequencyUnits = listOf("Horas", "Días", "Semanas")
     
-    // Hora de inicio: inicia con la hora actual formateada en AM/PM
+    // startText es para mostrar al usuario, startTimeValue es para la lógica interna (ISO)
     var startText by remember { mutableStateOf(timeFormatter.format(calendarInstance.time)) }
+    var startTimeValue by remember { 
+        val now = LocalTime.now()
+        mutableStateOf(String.format("%02d:%02d", now.hour, now.minute)) 
+    }
+    
     var duration by remember { mutableStateOf("") }
 
     val isFormValid = name.isNotBlank() && doseValue.isNotBlank() && 
@@ -81,7 +90,6 @@ fun AddMedicationScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Sección: Información Básica
             InfoSection(title = "Información General") {
                 CustomTextField(
                     value = name,
@@ -122,7 +130,6 @@ fun AddMedicationScreen(
                 }
             }
 
-            // Sección: Horarios Flexible (soporta Horas, Días, Semanas)
             InfoSection(title = "Configuración de Horarios") {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -166,6 +173,7 @@ fun AddMedicationScreen(
                     onClick = {
                         val calendar = Calendar.getInstance()
                         TimePickerDialog(context, { _, h, m -> 
+                            startTimeValue = String.format("%02d:%02d", h, m)
                             val selectedCal = Calendar.getInstance()
                             selectedCal.set(Calendar.HOUR_OF_DAY, h)
                             selectedCal.set(Calendar.MINUTE, m)
@@ -175,7 +183,6 @@ fun AddMedicationScreen(
                 )
             }
 
-            // Sección: Duración
             InfoSection(title = "Duración del Tratamiento") {
                 CustomTextField(
                     value = duration,
@@ -189,11 +196,9 @@ fun AddMedicationScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Botón de Guardar: incluye cálculo de intervalo y salida de pantalla
             Button(
                 onClick = {
                     val fVal = frequencyValue.toIntOrNull() ?: 0
-                    // Calculamos el intervalo base en horas para la lógica interna
                     val totalHours = when (frequencyUnit) {
                         "Días" -> fVal * 24
                         "Semanas" -> fVal * 24 * 7
@@ -202,6 +207,7 @@ fun AddMedicationScreen(
                     val frequencyString = "Cada $frequencyValue ${frequencyUnit.lowercase()}"
 
                     viewModel.saveMedication(
+                        application = application,
                         userId = userId,
                         name = name,
                         doseValue = doseValue,
@@ -209,10 +215,9 @@ fun AddMedicationScreen(
                         frequency = frequencyString,
                         intervalHours = totalHours,
                         intervalMinutes = 0,
-                        startTime = startText,
+                        startTime = startTimeValue, // Usamos el valor ISO para evitar el crash
                         durationDays = duration.toIntOrNull() ?: 1
                     )
-                    // Salimos de la pantalla inmediatamente tras guardar
                     navController.popBackStack()
                 },
                 enabled = isFormValid,

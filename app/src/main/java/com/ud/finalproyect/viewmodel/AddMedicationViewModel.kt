@@ -1,15 +1,24 @@
 package com.ud.finalproyect.viewmodel
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import com.ud.finalproyect.model.data.Medication
 import com.ud.finalproyect.model.repository.MedicationRepository
+import com.ud.finalproyect.notification.NotificationScheduler
 import java.time.LocalDate
 
 class AddMedicationViewModel : ViewModel() {
 
     private val repository = MedicationRepository()
+    private lateinit var notificationScheduler: NotificationScheduler
+
+    // Initialize NotificationScheduler with Application context, as ViewModels shouldn't hold Activity context
+    fun init(application: Application) {
+        notificationScheduler = NotificationScheduler(application.applicationContext)
+    }
 
     fun saveMedication(
+        application: Application,
         userId: String,
         name: String,
         doseValue: String,
@@ -39,6 +48,14 @@ class AddMedicationViewModel : ViewModel() {
             status = "Pendiente"
         )
 
-        repository.saveMedication(medication)
+        // Capture the returned medication with the Firebase-generated ID
+        val savedMedication = repository.saveMedication(medication)
+
+        // Schedule notification after saving medication
+        // Ensure notificationScheduler is initialized before calling scheduleMedicationReminder
+        if (!::notificationScheduler.isInitialized) {
+            notificationScheduler = NotificationScheduler(application.applicationContext)
+        }
+        notificationScheduler.scheduleMedicationReminder(savedMedication)
     }
 }

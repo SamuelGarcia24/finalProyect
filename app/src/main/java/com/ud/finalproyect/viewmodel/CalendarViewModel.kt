@@ -1,7 +1,6 @@
 package com.ud.finalproyect.viewmodel
 
 import androidx.lifecycle.ViewModel
-
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.ud.finalproyect.model.data.Medication
@@ -73,7 +72,6 @@ class CalendarViewModel : ViewModel() {
             }
         }
 
-        // Intento de fallback de emergencia si contiene AM/PM o formato simple
         return try {
             val parts = cleanTime.split(" ")[0].split(":")
             val h = parts[0].toInt()
@@ -87,12 +85,6 @@ class CalendarViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Determina el tipo de frecuencia basándose en el campo intervalHours
-     * Horas: intervalHours < 24
-     * Días: intervalHours es múltiplo de 24 (pero no de 7*24)
-     * Semanas: intervalHours es múltiplo de 7*24
-     */
     private fun determineFrequencyType(intervalHours: Int): FrequencyType {
         return when {
             intervalHours < 24 -> FrequencyType.HOURLY
@@ -110,36 +102,25 @@ class CalendarViewModel : ViewModel() {
         val frequencyType = determineFrequencyType(medication.intervalHours)
 
         return when (frequencyType) {
-            FrequencyType.HOURLY -> {
-                true
-            }
+            FrequencyType.HOURLY -> true
             FrequencyType.DAILY -> {
-                // Medicamento cada X días
                 val daysInterval = medication.intervalHours / 24
                 if (daysInterval > 0) {
                     val daysBetween = ChronoUnit.DAYS.between(startDate, date)
-                    daysBetween % daysInterval == 0L
-                } else {
-                    false
-                }
+                    daysBetween >= 0 && daysBetween % daysInterval == 0L
+                } else true
             }
             FrequencyType.WEEKLY -> {
-                // Medicamento cada X semanas
                 val weeksInterval = medication.intervalHours / (7 * 24)
                 if (weeksInterval > 0) {
                     val weeksBetween = ChronoUnit.WEEKS.between(startDate, date)
-                    weeksBetween % weeksInterval == 0L
-                } else {
-                    false
-                }
+                    weeksBetween >= 0 && weeksBetween % weeksInterval == 0L
+                } else true
             }
             FrequencyType.UNKNOWN -> false
         }
     }
 
-    /**
-     * Genera los horarios de toma para una fecha específica
-     */
     fun getDosesForDate(date: LocalDate): List<ScheduledDose> {
         val doses = mutableListOf<ScheduledDose>()
         val outputFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.getDefault())
@@ -148,47 +129,58 @@ class CalendarViewModel : ViewModel() {
             try {
                 val startDate = LocalDate.parse(med.startDate)
                 val endDate = LocalDate.parse(med.endDate)
+                val startTime = parseTimeSafely(med.startTime) ?: return@forEach
+                val friendlyTime = startTime.format(outputFormatter)
 
-                // Validar que la fecha esté dentro del rango de tratamiento
                 if (!date.isBefore(startDate) && !date.isAfter(endDate)) {
-                    // Validar si el medicamento se debe tomar en esta fecha
-                    if (shouldTakeMedicationOnDate(med, date, startDate)) {
-                        val startTime = parseTimeSafely(med.startTime) ?: return@forEach
-                        val frequencyType = determineFrequencyType(med.intervalHours)
+                    val frequencyType = determineFrequencyType(med.intervalHours)
 
-                        when (frequencyType) {
-                            FrequencyType.HOURLY -> {
-                                // Generar múltiples tomas durante el día
-                                if (med.intervalHours > 0) {
-                                    var currentDoseTime = startTime
-                                    val maxDoses = 24 / med.intervalHours
-                                    repeat(maxDoses) {
+                    when (frequencyType) {
+                        FrequencyType.HOURLY -> {
+                            if (med.intervalHours > 0) {
+                                // Lógica mejorada: Calcular desde el inicio absoluto del tratamiento
+                                var currentDateTime = startDate.atTime(startTime)
+                                val endOfSelectedDay = date.atTime(LocalTime.MAX)
+                                
+                                // Optimización: Si la fecha seleccionada es muy posterior al inicio, saltar intervalos
+                                if (currentDateTime.toLocalDate().isBefore(date)) {
+                                    val hoursBetween = ChronoUnit.HOURS.between(currentDateTime, date.atStartOfDay())
+                                    val intervalsToSkip = (hoursBetween + med.intervalHours - 1) / med.intervalHours
+                                    currentDateTime = currentDateTime.plusHours(intervalsToSkip * med.intervalHours)
+                                }
+
+                                while (!currentDateTime.isAfter(endOfSelectedDay)) {
+                                    if (currentDateTime.toLocalDate() == date) {
                                         doses.add(
                                             ScheduledDose(
                                                 medicationName = med.name,
-                                                time = currentDoseTime.format(outputFormatter),
+                                                time = currentDateTime.toLocalTime().format(outputFormatter),
                                                 dose = med.dose
                                             )
                                         )
-                                        currentDoseTime = currentDoseTime.plusHours(med.intervalHours.toLong())
                                     }
-                                } else {
-                                    doses.add(ScheduledDose(med.name, med.startTime, med.dose))
+                                    currentDateTime = currentDateTime.plusHours(med.intervalHours.toLong())
+                                    // Evitar bucle infinito si por error llega un intervalo de 0
+                                    if (med.intervalHours == 0) break 
                                 }
+                            } else {
+                                doses.add(ScheduledDose(med.name, friendlyTime, med.dose))
                             }
-                            FrequencyType.DAILY, FrequencyType.WEEKLY -> {
-                                // Una única toma en la hora programada
-                                doses.add(ScheduledDose(med.name, med.startTime, med.dose))
+                        }
+                        FrequencyType.DAILY, FrequencyType.WEEKLY -> {
+                            if (shouldTakeMedicationOnDate(med, date, startDate)) {
+                                doses.add(ScheduledDose(med.name, friendlyTime, med.dose))
                             }
-                            FrequencyType.UNKNOWN -> {
-                                // Fallback: toma única
-                                doses.add(ScheduledDose(med.name, med.startTime, med.dose))
+                        }
+                        FrequencyType.UNKNOWN -> {
+                            if (date == startDate) {
+                                doses.add(ScheduledDose(med.name, friendlyTime, med.dose))
                             }
                         }
                     }
                 }
             } catch (e: Exception) {
-                // Ignorar medicamentos con datos de fechas mal estructurados
+                // Ignorar errores de parseo
             }
         }
         return doses.sortedBy { parseTimeSafely(it.time) ?: LocalTime.MIN }
