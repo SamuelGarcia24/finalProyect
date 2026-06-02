@@ -1,0 +1,87 @@
+<resources>
+    <string name="app_name">Medic Control</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_general_header">General Settings</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_dark_mode">Dark Mode</string>
+    <string name="settings_sign_out">Sign Out</string>
+    <string name="settings_user_default">User</string>
+    <string name="settings_no_email">No email</string>
+    <string name="lang_es">Spanish</string>
+    <string name="lang_en">English</string>
+
+    <string name="med_list_title">My Medications</string>
+    <string name="med_add_button">Add Medication</string>
+    <string name="med_no_data">No medications scheduled</string>
+    <string name="med_dose">Dose</string>
+    <string name="med_time">Time:</string>
+
+    <string name="auth_login">Login</string>
+    <string name="auth_register">Sign Up</string>
+    <string name="auth_email">Email Address</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_forgot_password">Forgot your password?</string>
+    <string name="auth_error_login">Login failed</string>
+
+    <string name="btn_save">Save</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_delete">Delete</string>
+
+    <!-- STRINGS FOR ADDMEDICATION -->
+    <string name="add_med_title">New Medication</string>
+    <string name="add_med_back">Back</string>
+    <string name="add_med_info_general">General Information</string>
+    <string name="add_med_name_label">Medication name</string>
+    <string name="add_med_name_placeholder">Ex: Ibuprofen</string>
+    <string name="add_med_schedule_config">Schedule Configuration</string>
+    <string name="add_med_frequency_label">Frequency</string>
+    <string name="add_med_frequency_placeholder">Ex: 8</string>
+    <string name="add_med_first_take">First dose time</string>
+    <string name="add_med_duration_section">Treatment Duration</string>
+    <string name="add_med_duration_label">Number of days</string>
+    <string name="add_med_duration_placeholder">Ex: 7</string>
+    <string name="add_med_btn_save">Save Medication</string>
+    <string name="unit_hours">Hours</string>
+    <string name="unit_days">Days</string>
+    <string name="unit_weeks">Weeks</string>
+    <string name="prefix_every">Every</string>
+
+    <!-- STRINGS FOR LOGINSCREEN -->
+    <string name="auth_welcome">Welcome</string>
+    <string name="auth_create_account">Create your account</string>
+    <string name="auth_sub_login">Log in to continue</string>
+    <string name="auth_sub_register">Sign up to start managing your doses</string>
+    <string name="auth_email_placeholder">example@email.com</string>
+    <string name="auth_toggle_to_register">Don\'t have an account? Sign up</string>
+    <string name="auth_toggle_to_login">Already have an account? Log in</string>
+    <string name="auth_divider_or"> OR </string>
+    <string name="auth_google_continue">Continue with Google</string>
+
+
+    <!-- STRINGS FOR HOMESCREEN -->
+    <string name="home_title">Medications today</string>
+    <string name="home_no_meds">No medications for today</string>
+    <string name="home_btn_details">See details</string>
+    <string name="home_delete_title">Delete medication</string>
+    <string name="home_delete_confirm">Are you sure you want to delete \"%1$s\"?</string>
+    <string name="home_delete_action">Delete</string>
+    <string name="home_cancel_action">Cancel</string>
+    <string name="home_ic_delete_desc">Delete medication</string>
+
+
+    <!-- STRINGS FOR NAVGRAPH -->
+    <string name="nav_home">Home</string>
+    <string name="nav_diary">Diary</string>
+    <string name="nav_calendar">Calendar</string>
+    <string name="nav_history">History</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_fab_add_desc">Add medication</string>
+
+
+    <string name="settings_default_user">User</string>
+    <string name="settings_default_email">No email</string>
+    <string name="settings_section_general">General Settings</string>
+
+</resources>

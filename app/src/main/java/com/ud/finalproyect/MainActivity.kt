@@ -7,9 +7,11 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -19,7 +21,7 @@ import com.ud.finalproyect.navigation.NavGraph
 import com.ud.finalproyect.notification.NotificationScheduler
 import com.ud.finalproyect.theme.MedicControlTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var notificationScheduler: NotificationScheduler
 
@@ -27,11 +29,8 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (!isGranted) {
-            // Permission not granted. You might want to show a rationale or guide the user to settings.
-            // For example, navigate to app settings if user denied permanently
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                // User denied and checked "Don't ask again" or denied twice
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                     data = Uri.fromParts("package", packageName, null)
                 }
@@ -43,29 +42,28 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Inicialización de tus notificaciones existentes
         notificationScheduler = NotificationScheduler(this)
         notificationScheduler.createNotificationChannel()
 
         requestNotificationPermission()
 
-        // Note: For SCHEDULE_EXACT_ALARM (API 31+), the user must explicitly grant permission
-        // through system settings. There's no direct runtime permission dialog for it.
-        // You can check the permission status and guide the user if needed:
-        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        //     val alarmManager = getSystemService(AlarmManager::class.java)
-        //     if (!alarmManager.canScheduleExactAlarms()) {
-        //         val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-        //         startActivity(intent)
-        //     }
-        // }
-
         setContent {
-            MedicControlTheme {
+            // DETECCIÓN CLAVE PARA EL MODO OSCURO:
+            // Revisamos si el AppCompatDelegate está en modo noche activo o si sigue el sistema
+            val isAppInDarkMode = when (AppCompatDelegate.getDefaultNightMode()) {
+                AppCompatDelegate.MODE_NIGHT_YES -> true
+                AppCompatDelegate.MODE_NIGHT_NO -> false
+                else -> isSystemInDarkTheme() // Si no se ha tocado el switch, sigue el del celular
+            }
+
+            // Le pasamos el estado real de la app a tu tema personalizado
+            MedicControlTheme(darkTheme = isAppInDarkMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NavGraph()
+                    NavGraph() // Tu enrutador de pantallas
                 }
             }
         }

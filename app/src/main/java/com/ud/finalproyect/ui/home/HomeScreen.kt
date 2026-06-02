@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import com.ud.finalproyect.R
 import com.ud.finalproyect.model.data.Medication
 import com.ud.finalproyect.viewmodel.HomeViewModel
 
@@ -37,7 +39,7 @@ fun HomeScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "Medications today",
+            text = stringResource(id = R.string.home_title),
             fontSize = 22.sp,
             color = MaterialTheme.colorScheme.primary
         )
@@ -50,7 +52,7 @@ fun HomeScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No medications for today",
+                    text = stringResource(id = R.string.home_no_meds),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -73,7 +75,7 @@ fun HomeScreen(
                 onClick = { navController.navigate("Diary") },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("See details")
+                Text(text = stringResource(id = R.string.home_btn_details))
             }
         }
     }
@@ -137,7 +139,7 @@ fun MedicationItem(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete medication",
+                            contentDescription = stringResource(id = R.string.home_ic_delete_desc),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -150,8 +152,8 @@ fun MedicationItem(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Eliminar medicamento") },
-            text = { Text("¿Estás seguro de que deseas eliminar \"${medication.name}\"?") },
+            title = { Text(text = stringResource(id = R.string.home_delete_title)) },
+            text = { Text(text = stringResource(id = R.string.home_delete_confirm, medication.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -162,12 +164,12 @@ fun MedicationItem(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Eliminar")
+                    Text(text = stringResource(id = R.string.home_delete_action))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancelar")
+                    Text(text = stringResource(id = R.string.home_cancel_action))
                 }
             }
         )

@@ -23,6 +23,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
+import com.ud.finalproyect.R
 import com.ud.finalproyect.viewmodel.AuthViewModel
 
 @Composable
@@ -70,14 +72,14 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = if (isRegistering) "Crea tu cuenta" else "Bienvenido",
+            text = if (isRegistering) stringResource(id = R.string.auth_create_account) else stringResource(id = R.string.auth_welcome),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
 
         Text(
-            text = if (isRegistering) "Regístrate para empezar a gestionar tus dosis" else "Inicia sesión para continuar",
+            text = if (isRegistering) stringResource(id = R.string.auth_sub_register) else stringResource(id = R.string.auth_sub_login),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -89,8 +91,8 @@ fun LoginScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Correo electrónico") },
-            placeholder = { Text("ejemplo@correo.com") },
+            label = { Text(text = stringResource(id = R.string.auth_email)) },
+            placeholder = { Text(text = stringResource(id = R.string.auth_email_placeholder)) },
             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -103,7 +105,7 @@ fun LoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Contraseña") },
+            label = { Text(text = stringResource(id = R.string.auth_password)) },
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
             trailingIcon = {
                 IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
@@ -140,7 +142,7 @@ fun LoginScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = if (isRegistering) "Registrarse" else "Iniciar Sesión",
+                    text = if (isRegistering) stringResource(id = R.string.auth_register) else stringResource(id = R.string.auth_login),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -149,12 +151,12 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Alternar entre Login y Registro
-            TextButton(onClick = { 
-                isRegistering = !isRegistering 
+            TextButton(onClick = {
+                isRegistering = !isRegistering
                 authViewModel.clearError()
             }) {
                 Text(
-                    text = if (isRegistering) "¿Ya tienes cuenta? Inicia sesión" else "¿No tienes cuenta? Regístrate",
+                    text = if (isRegistering) stringResource(id = R.string.auth_toggle_to_login) else stringResource(id = R.string.auth_toggle_to_register),
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -169,7 +171,7 @@ fun LoginScreen(
         ) {
             HorizontalDivider(modifier = Modifier.weight(1f))
             Text(
-                text = " O ",
+                text = stringResource(id = R.string.auth_divider_or),
                 modifier = Modifier.padding(horizontal = 16.dp),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline
@@ -192,7 +194,7 @@ fun LoginScreen(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Continuar con Google",
+                    text = stringResource(id = R.string.auth_google_continue),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )

@@ -1,3 +1,85 @@
 <resources>
-    <string name="app_name">FinalProyect</string>
+    <string name="app_name">Medic Control</string>
+
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_general_header">Ajustes Generales</string>
+    <string name="settings_notifications">Notificaciones</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_dark_mode">Modo Oscuro</string>
+    <string name="settings_sign_out">Cerrar Sesión</string>
+    <string name="settings_user_default">Usuario</string>
+    <string name="settings_no_email">Sin correo</string>
+    <string name="lang_es">Español</string>
+    <string name="lang_en">Inglés</string>
+
+    <string name="med_list_title">Mis Medicamentos</string>
+    <string name="med_add_button">Agregar Medicamento</string>
+    <string name="med_no_data">No hay medicamentos programados</string>
+    <string name="med_dose">Dosis</string>
+    <string name="med_time">Hora:</string>
+
+    <string name="auth_login">Iniciar Sesión</string>
+    <string name="auth_register">Registrarse</string>
+    <string name="auth_email">Correo Electrónico</string>
+    <string name="auth_password">Contraseña</string>
+    <string name="auth_forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="auth_error_login">Error al iniciar sesión</string>
+
+    <string name="btn_save">Guardar</string>
+    <string name="btn_cancel">Cancelar</string>
+    <string name="btn_delete">Eliminar</string>
+
+    <!-- STRINGS PARA ADDMEDICATION -->
+    <string name="add_med_title">Nuevo Medicamento</string>
+    <string name="add_med_back">Regresar</string>
+    <string name="add_med_info_general">Información General</string>
+    <string name="add_med_name_label">Nombre del medicamento</string>
+    <string name="add_med_name_placeholder">Ej: Ibuprofeno</string>
+    <string name="add_med_schedule_config">Configuración de Horarios</string>
+    <string name="add_med_frequency_label">Cada cuanto</string>
+    <string name="add_med_frequency_placeholder">Ej: 8</string>
+    <string name="add_med_first_take">Hora de la primera toma</string>
+    <string name="add_med_duration_section">Duración del Tratamiento</string>
+    <string name="add_med_duration_label">Número de días</string>
+    <string name="add_med_duration_placeholder">Ej: 7</string>
+    <string name="add_med_btn_save">Guardar Medicamento</string>
+    <string name="unit_hours">Horas</string>
+    <string name="unit_days">Días</string>
+    <string name="unit_weeks">Semanas</string>
+    <string name="prefix_every">Cada</string>
+
+    <!-- STRINGS PARA LOGINSCREEN -->
+    <string name="auth_welcome">Bienvenido</string>
+    <string name="auth_create_account">Crea tu cuenta</string>
+    <string name="auth_sub_login">Inicia sesión para continuar</string>
+    <string name="auth_sub_register">Regístrate para empezar a gestionar tus dosis</string>
+    <string name="auth_email_placeholder">ejemplo@correo.com</string>
+    <string name="auth_toggle_to_register">¿No tienes cuenta? Regístrate</string>
+    <string name="auth_toggle_to_login">¿Ya tienes cuenta? Inicia sesión</string>
+    <string name="auth_divider_or"> O </string>
+    <string name="auth_google_continue">Continuar con Google</string>
+
+    <!-- STRINGS PARA HOMESCREEN -->
+    <string name="home_title">Medicamentos de hoy</string>
+    <string name="home_no_meds">No hay medicamentos para hoy</string>
+    <string name="home_btn_details">Ver detalles</string>
+    <string name="home_delete_title">Eliminar medicamento</string>
+    <string name="home_delete_confirm">¿Estás seguro de que deseas eliminar \"%1$s\"?</string>
+    <string name="home_delete_action">Eliminar</string>
+    <string name="home_cancel_action">Cancelar</string>
+    <string name="home_ic_delete_desc">Eliminar medicamento</string>
+
+    <!-- STRINGS PARA NAVGRAPH -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_diary">Diario</string>
+    <string name="nav_calendar">Calendario</string>
+    <string name="nav_history">Historial</string>
+    <string name="nav_settings">Ajustes</string>
+    <string name="nav_fab_add_desc">Agregar medicamento</string>
+
+
+    <string name="settings_default_user">Usuario</string>
+    <string name="settings_default_email">Sin correo</string>
+    <string name="settings_section_general">Ajustes Generales</string>
+
 </resources>
