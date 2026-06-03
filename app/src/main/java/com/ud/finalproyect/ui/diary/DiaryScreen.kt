@@ -21,8 +21,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ud.finalproyect.model.data.Medication
+// ...existing code...
+import com.ud.finalproyect.model.data.ScheduledDose
+import com.ud.finalproyect.viewmodel.CalendarViewModel
 import com.ud.finalproyect.viewmodel.DiaryViewModel
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -32,7 +37,9 @@ fun DiaryScreen(
     modifier: Modifier = Modifier,
     viewModel: DiaryViewModel = viewModel()
 ) {
-    val medications by viewModel.medications.collectAsState()
+    val calendarViewModel: CalendarViewModel = viewModel()
+    val calendarMeds by calendarViewModel.medications.collectAsState()
+
     val days = remember { (-3..3).map { LocalDate.now().plusDays(it.toLong()) } }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
 
@@ -40,8 +47,9 @@ fun DiaryScreen(
         if (userId.isNotEmpty()) viewModel.loadForUser(userId)
     }
 
-    val medicationsForDate = remember(selectedDate, medications) {
-        viewModel.getMedicationsForDate(selectedDate.toString())
+    // Obtener dosis programadas para el día seleccionado usando CalendarViewModel
+    val dosesForDate: List<ScheduledDose> = remember(selectedDate, calendarMeds) {
+        calendarViewModel.getDosesForDate(selectedDate)
     }
 
     Column(
@@ -92,7 +100,7 @@ fun DiaryScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (medicationsForDate.isEmpty()) {
+        if (dosesForDate.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -107,14 +115,21 @@ fun DiaryScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                items(medicationsForDate) { med ->
-                    DiaryMedicationItem(
-                        medication = med,
-                        isTaken = med.takenDates.contains(selectedDate.toString()),
-                        onToggle = { id ->
-                            viewModel.toggleTaken(id, selectedDate.toString())
-                        }
-                    )
+                items(dosesForDate) { dose ->
+                            DiaryDoseItem(
+                                dose = dose,
+                                date = selectedDate,
+                                onToggleTaken = { medId, dateStr, scheduledTime, currentlyTaken ->
+                                    if (currentlyTaken) {
+                                        // unmark
+                                        viewModel.unmarkTaken(medId, dateStr, scheduledTime)
+                                    } else {
+                                        // mark with current time
+                                        val now = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+                                        viewModel.markTaken(medId, dateStr, scheduledTime, now)
+                                    }
+                                }
+                            )
                 }
             }
         }
@@ -122,68 +137,89 @@ fun DiaryScreen(
 }
 
 @Composable
-fun DiaryMedicationItem(
-    medication: Medication,
-    isTaken: Boolean,
-    onToggle: (String) -> Unit
+fun DiaryDoseItem(
+    dose: ScheduledDose,
+    date: LocalDate,
+    onToggleTaken: (String, String, String, Boolean) -> Unit
 ) {
+    val scheduledTime = dose.time
+    val isAlreadyTaken = !dose.actualTime.isNullOrEmpty()
+
+    // Habilitar el botón solo si la hora actual está dentro de la ventana permitida (±10 minutos)
+    // y si la fecha seleccionada es hoy.
+    fun isWithinWindow(timeStr: String, date: LocalDate, windowMinutes: Long = 10): Boolean {
+        try {
+            if (date != LocalDate.now()) return false
+            val formatter = DateTimeFormatter.ofPattern("hh:mm a")
+            val scheduled = LocalTime.parse(timeStr, formatter)
+            val now = LocalTime.now()
+            val diff = kotlin.math.abs(ChronoUnit.MINUTES.between(now, scheduled))
+            return diff <= windowMinutes
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
+            .padding(bottom = 12.dp)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape)
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(2.dp)
-                    .background(Color.LightGray)
-            )
+        // Tiempo a la izquierda
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(80.dp)
+        ) {
+            Text(text = scheduledTime, style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(modifier = Modifier
+                .width(4.dp)
+                .height(60.dp)
+                .background(MaterialTheme.colorScheme.primary))
         }
 
         Card(
             modifier = Modifier
-                .padding(start = 16.dp, bottom = 16.dp)
+                .padding(start = 12.dp)
                 .fillMaxWidth(),
             elevation = CardDefaults.cardElevation(4.dp),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(12.dp)
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = medication.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "${medication.dose} · ${medication.startTime}",
-                        color = Color.Gray,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = medication.frequency,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(text = dose.medicationName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(text = dose.dose, color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                    if (isAlreadyTaken) {
+                        Text(text = "Tomado: ${dose.actualTime}", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
 
-                IconButton(onClick = { onToggle(medication.id) }) {
+                val canMark = !isAlreadyTaken && isWithinWindow(scheduledTime, date)
+
+                IconButton(
+                    onClick = {
+                        val isoKey = try {
+                            LocalTime.parse(scheduledTime, DateTimeFormatter.ofPattern("hh:mm a")).format(DateTimeFormatter.ofPattern("HH:mm"))
+                        } catch (e: Exception) {
+                            try { LocalTime.parse(scheduledTime, DateTimeFormatter.ofPattern("HH:mm")).format(DateTimeFormatter.ofPattern("HH:mm")) } catch (ex: Exception) { scheduledTime }
+                        }
+                        if (isAlreadyTaken) {
+                            onToggleTaken(dose.medicationId, date.toString(), isoKey, true)
+                        } else if (canMark) {
+                            onToggleTaken(dose.medicationId, date.toString(), isoKey, false)
+                        }
+                    },
+                    enabled = true
+                ) {
                     Icon(
-                        imageVector = if (isTaken)
-                            Icons.Default.CheckCircle
-                        else
-                            Icons.Default.RadioButtonUnchecked,
+                        imageVector = if (isAlreadyTaken) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                         contentDescription = "Mark as taken",
-                        tint = if (isTaken) Color.Green else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
+                        tint = if (isAlreadyTaken) Color.Green else if (canMark) MaterialTheme.colorScheme.primary else Color.LightGray,
+                        modifier = Modifier.size(36.dp)
                     )
                 }
             }

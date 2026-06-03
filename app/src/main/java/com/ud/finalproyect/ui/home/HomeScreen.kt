@@ -7,6 +7,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import com.ud.finalproyect.notification.NotificationScheduler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -46,6 +48,8 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        val context = LocalContext.current
+
         if (medications.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -64,7 +68,15 @@ fun HomeScreen(
                 items(medications) { medication ->
                     MedicationItem(
                         medication = medication,
-                        onDelete = { viewModel.deleteMedication(medication.id) }
+                        onDelete = {
+                            // Cancel scheduled reminders for this medication before deleting
+                            try {
+                                NotificationScheduler(context).cancelMedicationReminder(medication)
+                            } catch (e: Exception) {
+                                // Ignore cancellation errors but proceed to delete
+                            }
+                            viewModel.deleteMedication(medication.id)
+                        }
                     )
                 }
             }
@@ -95,8 +107,7 @@ fun MedicationItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -111,39 +122,16 @@ fun MedicationItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier.weight(1f)
+
+            IconButton(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.size(36.dp)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = medication.startTime,
-                            fontSize = 16.sp
-                        )
-                        Text(
-                            text = medication.status,
-                            fontSize = 14.sp,
-                            color = if (medication.status == "Tomado")
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(
-                        onClick = { showDeleteDialog = true },
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(id = R.string.home_ic_delete_desc),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(id = R.string.home_ic_delete_desc),
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }

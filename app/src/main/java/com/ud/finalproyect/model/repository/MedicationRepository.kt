@@ -51,4 +51,34 @@ class MedicationRepository {
     fun deleteMedication(medicationId: String) {
         medicationsRef.child(medicationId).removeValue()
     }
+
+    // Actualiza la hora real en que se tomó el medicamento.
+    // Si scheduledTime es provisto, la llave usada será "{date}|{scheduledTime}" permitiendo múltiples tomas en un mismo día.
+    fun updateActualTakenTime(medicationId: String, date: String, actualTime: String, scheduledTime: String? = null) {
+        val key = if (!scheduledTime.isNullOrEmpty()) "${date}|${scheduledTime}" else date
+        medicationsRef.child(medicationId).child("actualTakenTimes").child(key).setValue(actualTime)
+    }
+
+    // Elimina la entrada actualTakenTimes específica (por fecha o por fecha|hora)
+    fun removeActualTakenTime(medicationId: String, date: String, scheduledTime: String? = null) {
+        val key = if (!scheduledTime.isNullOrEmpty()) "${date}|${scheduledTime}" else date
+        medicationsRef.child(medicationId).child("actualTakenTimes").child(key).removeValue()
+    }
+
+    // Obtiene la hora real de toma para una fecha específica
+    fun getActualTakenTime(medicationId: String, date: String): Flow<String?> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val time = snapshot.getValue(String::class.java)
+                trySend(time)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        medicationsRef.child(medicationId).child("actualTakenTimes").child(date).addValueEventListener(listener)
+        awaitClose { medicationsRef.child(medicationId).child("actualTakenTimes").child(date).removeEventListener(listener) }
+    }
 }
