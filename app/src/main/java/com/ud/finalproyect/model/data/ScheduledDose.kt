@@ -5,5 +5,5 @@ data class ScheduledDose(
     val medicationId: String,
     val time: String,
     val dose: String,
-    val actualTime: String? = null // Hora real en que se tomó (si difiere de time)
+    val actualTime: String? = null
 )

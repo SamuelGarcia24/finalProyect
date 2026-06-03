@@ -42,22 +42,19 @@ class MedicationReminderReceiver : BroadcastReceiver() {
                 }
             }
             NotificationScheduler.ACTION_SCHEDULE_MEDICATION_REMINDER -> {
-                val medicationName = intent.getStringExtra("MEDICATION_NAME") ?: "Tu Medicamento"
+                val medicationName = intent.getStringExtra("MEDICATION_NAME") ?: applicationContext.getString(R.string.notification_default_med)
                 val medicationDose = intent.getStringExtra("MEDICATION_DOSE") ?: ""
                 val medicationId = intent.getStringExtra("MEDICATION_ID") ?: ""
                 val notificationTime = intent.getStringExtra("NOTIFICATION_TIME") ?: ""
                 val notificationDate = intent.getStringExtra("NOTIFICATION_DATE") ?: ""
                 val requestCode = intent.getIntExtra("REQUEST_CODE", 0)
 
-                // Check Do Not Disturb setting
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val prefRepo = NotificationPreferenceRepository()
                         val preferences = prefRepo.getPreferences().first()
 
-                        // Check if notification should be suppressed due to Do Not Disturb
                         if (shouldSuppressNotification(preferences)) {
-                            // Still log it but don't show
                             val historyRepo = NotificationHistoryRepository()
                             val log = NotificationLog(
                                 medicationId = medicationId,
@@ -73,7 +70,6 @@ class MedicationReminderReceiver : BroadcastReceiver() {
                             return@launch
                         }
 
-                        // Show notification with actions
                         showNotificationWithActions(
                             applicationContext,
                             notificationManager,
@@ -85,7 +81,6 @@ class MedicationReminderReceiver : BroadcastReceiver() {
                             notificationDate
                         )
 
-                        // Log notification
                         val historyRepo = NotificationHistoryRepository()
                         val log = NotificationLog(
                             medicationId = medicationId,
@@ -99,7 +94,6 @@ class MedicationReminderReceiver : BroadcastReceiver() {
                         )
                         historyRepo.saveNotificationLog(log)
                     } catch (e: Exception) {
-                        // If error reading preferences, show notification anyway
                         showNotificationWithActions(
                             applicationContext,
                             notificationManager,
@@ -124,10 +118,8 @@ class MedicationReminderReceiver : BroadcastReceiver() {
         val endTime = LocalTime.parse(preferences.doNotDisturbEnd)
 
         return if (startTime.isBefore(endTime)) {
-            // Normal case: e.g., 21:00 to 08:00 spans across midnight
             now.isAfter(startTime) || now.isBefore(endTime)
         } else {
-            // Spans midnight: e.g., 21:00 to 08:00
             now.isAfter(startTime) || now.isBefore(endTime)
         }
     }
@@ -142,7 +134,6 @@ class MedicationReminderReceiver : BroadcastReceiver() {
         medicationId: String,
         notificationDate: String
     ) {
-        // Convert ISO time to friendly format (hh:mm a)
         val friendlyTime = try {
             LocalTime.parse(notificationTime)
                 .format(DateTimeFormatter.ofPattern("hh:mm a", Locale.getDefault()))
@@ -161,7 +152,6 @@ class MedicationReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Create Snooze action
         val snoozeAction = NotificationActionReceiver.createSnoozeActionIntent(
             context,
             requestCode,
@@ -172,7 +162,6 @@ class MedicationReminderReceiver : BroadcastReceiver() {
             notificationDate
         )
 
-        // Create Confirm action (include notificationTime so receiver can identify per-dose key)
         val confirmAction = NotificationActionReceiver.createConfirmActionIntent(
             context,
             requestCode,
@@ -183,20 +172,20 @@ class MedicationReminderReceiver : BroadcastReceiver() {
 
         val notificationBuilder = NotificationCompat.Builder(context, NotificationScheduler.CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Hora de su medicina")
-            .setContentText("Tomar: $medicationName ($medicationDose) - $friendlyTime")
+            .setContentTitle(context.getString(R.string.notification_title))
+            .setContentText(context.getString(R.string.notification_content, medicationName, medicationDose, friendlyTime))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .addAction(
                 android.R.drawable.ic_menu_recent_history,
-                "Posponer",
+                context.getString(R.string.notification_action_snooze),
                 snoozeAction
             )
             .addAction(
                 android.R.drawable.ic_menu_view,
-                "Tomar",
+                context.getString(R.string.notification_action_take),
                 confirmAction
             )
 
@@ -204,7 +193,6 @@ class MedicationReminderReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        // Import NotificationPreference for the shouldSuppressNotification function
         private fun isExternalClass(): Boolean = false
     }
 }

@@ -13,13 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Medication
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.Scale
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,11 +30,17 @@ import java.time.format.TextStyle
 import java.util.*
 import com.ud.finalproyect.viewmodel.CalendarViewModel
 import com.ud.finalproyect.model.data.ScheduledDose
+import androidx.compose.ui.platform.LocalConfiguration
+import java.time.DayOfWeek
+import java.time.format.DateTimeFormatter
+import androidx.compose.ui.res.stringResource
+import com.ud.finalproyect.R
 
 @Composable
 fun CalendarScreen(viewModel: CalendarViewModel = viewModel()) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+    val locale = LocalConfiguration.current.locales[0]
     
     val medications by viewModel.medications.collectAsState()
     val dailyDoses = remember(selectedDate, medications) {
@@ -53,7 +53,7 @@ fun CalendarScreen(viewModel: CalendarViewModel = viewModel()) {
             .padding(16.dp)
     ) {
         Text(
-            text = "Calendario de Medicación",
+            text = stringResource(id = R.string.calendar_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 24.dp)
@@ -106,18 +106,22 @@ fun CalendarScreen(viewModel: CalendarViewModel = viewModel()) {
             ) {
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
-                    contentDescription = "Calendario",
+                    contentDescription = stringResource(id = R.string.nav_calendar),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(32.dp)
                 )
                 Column {
                     Text(
-                        text = "Tomas programadas",
+                        text = stringResource(id = R.string.calendar_scheduled_takes),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = selectedDate.dayOfMonth.toString() + " de " + selectedDate.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")),
+                        text = stringResource(
+                            id = R.string.calendar_day_date_format,
+                            selectedDate.dayOfMonth,
+                            selectedDate.month.getDisplayName(TextStyle.FULL, locale)
+                        ),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -170,12 +174,12 @@ fun CalendarScreen(viewModel: CalendarViewModel = viewModel()) {
                         modifier = Modifier.size(48.dp)
                     )
                     Text(
-                        text = "Sin medicamentos programados",
+                        text = stringResource(id = R.string.calendar_no_meds_title),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "No hay tomas para este día",
+                        text = stringResource(id = R.string.calendar_no_meds_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -190,21 +194,22 @@ fun CalendarHeader(
     currentMonth: YearMonth,
     onMonthChange: (YearMonth) -> Unit
 ) {
+    val locale = LocalConfiguration.current.locales[0]
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = { onMonthChange(currentMonth.minusMonths(1)) }) {
-            Icon(Icons.Default.ChevronLeft, contentDescription = "Mes anterior")
+            Icon(Icons.Default.ChevronLeft, contentDescription = stringResource(id = R.string.calendar_prev_month))
         }
         Text(
-            text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).replaceFirstChar { it.uppercase() }} ${currentMonth.year}",
+            text = "${currentMonth.month.getDisplayName(TextStyle.FULL, locale).replaceFirstChar { it.uppercase() }} ${currentMonth.year}",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         IconButton(onClick = { onMonthChange(currentMonth.plusMonths(1)) }) {
-            Icon(Icons.Default.ChevronRight, contentDescription = "Mes siguiente")
+            Icon(Icons.Default.ChevronRight, contentDescription = stringResource(id = R.string.calendar_next_month))
         }
     }
 }
@@ -219,11 +224,18 @@ fun CalendarGrid(
     val daysInMonth = currentMonth.lengthOfMonth()
     val firstDayOfMonth = currentMonth.atDay(1).dayOfWeek.value % 7
     val days = (1..daysInMonth).toList()
-    val dayNames = listOf("Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb")
+    val locale = LocalConfiguration.current.locales[0]
+    
+    val adjustedDayNames = remember(locale) {
+        val names = (1..7).map { dayNum ->
+            DayOfWeek.of(dayNum).getDisplayName(TextStyle.SHORT, locale)
+        }
+        listOf(names[6]) + names.subList(0, 6)
+    }
 
     Column {
         Row(modifier = Modifier.fillMaxWidth()) {
-            dayNames.forEach { dayName ->
+            adjustedDayNames.forEach { dayName ->
                 Text(
                     text = dayName,
                     modifier = Modifier.weight(1f),
@@ -306,7 +318,7 @@ fun MedicationDoseCard(dose: ScheduledDose) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -315,7 +327,6 @@ fun MedicationDoseCard(dose: ScheduledDose) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Icono de medicamento
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -327,13 +338,12 @@ fun MedicationDoseCard(dose: ScheduledDose) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Medication,
-                    contentDescription = "Medicamento",
+                    contentDescription = stringResource(id = R.string.add_med_name_label),
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(28.dp)
                 )
             }
 
-            // Información principal
             Column(
                 modifier = Modifier
                     .weight(1f),
@@ -348,19 +358,17 @@ fun MedicationDoseCard(dose: ScheduledDose) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Hora - mostrar hora real si existe y es diferente
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(imageVector = Icons.Default.AccessTime, contentDescription = "Hora", modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(imageVector = Icons.Default.AccessTime, contentDescription = stringResource(id = R.string.med_time), modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Column {
                             Text(
                                 text = dose.time,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            // Mostrar hora real si es diferente de la programada
                             if (dose.actualTime != null && dose.actualTime != dose.time) {
                                 Text(
-                                    text = "Tomado: ${dose.actualTime}",
+                                    text = stringResource(id = R.string.diary_taken_at, dose.actualTime),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.SemiBold
@@ -368,15 +376,13 @@ fun MedicationDoseCard(dose: ScheduledDose) {
                             }
                         }
                     }
-                    // Dosis
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(imageVector = Icons.Default.Scale, contentDescription = "Dosis", modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(imageVector = Icons.Default.Scale, contentDescription = stringResource(id = R.string.med_dose), modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(text = dose.dose, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
 
-            // Indicador visual de estado - diferente color si fue pospuesto
             Box(
                 modifier = Modifier
                     .size(8.dp)

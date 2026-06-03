@@ -77,9 +77,60 @@
     <string name="nav_settings">Ajustes</string>
     <string name="nav_fab_add_desc">Agregar medicamento</string>
 
-
+    <!-- STRINGS PARA SETTINGSSCREEN -->
     <string name="settings_default_user">Usuario</string>
     <string name="settings_default_email">Sin correo</string>
     <string name="settings_section_general">Ajustes Generales</string>
+    <string name="settings_advanced_notifications">Notificaciones Avanzadas</string>
+    <string name="settings_auto_silence">Silencio Automático</string>
+    <string name="settings_dnd_range">Horario sin notificaciones</string>
+    <string name="settings_from">Desde</string>
+    <string name="settings_to">Hasta</string>
+    <string name="settings_dnd_example">Ejemplo: Sin notificaciones de %1$s a %2$s</string>
+    <string name="settings_snooze_interval">Intervalo de Posponer</string>
+    <string name="settings_snooze_desc">Las notificaciones se pospondrán %1$d minutos</string>
+    <string name="settings_select_time">Seleccionar hora</string>
+    <string name="settings_hour">Hora</string>
+    <string name="settings_minute">Minuto</string>
+
+    <!-- STRINGS PARA HISTORYSCREEN -->
+    <string name="history_title">Historial de Tratamientos</string>
+    <string name="history_filter_label">Filtrar por mes de tratamiento</string>
+    <string name="history_filter_all">Todos</string>
+    <string name="history_empty">No hay tratamientos registrados para este período</string>
+    <string name="history_period">Periodo: %1$s</string>
+    <string name="history_status_active">ACTIVO</string>
+    <string name="history_status_finished">FINALIZADO</string>
+
+    <!-- STRINGS PARA DIARYSCREEN -->
+    <string name="diary_no_meds">No hay medicamentos para este día</string>
+    <string name="diary_taken_at">Tomado: %1$s</string>
+    <string name="diary_mark_as_taken">Marcar como tomado</string>
+
+    <!-- STRINGS PARA CALENDARSCREEN -->
+    <string name="calendar_title">Calendario de Medicación</string>
+    <string name="calendar_scheduled_takes">Tomas programadas</string>
+    <string name="calendar_no_meds_title">Sin medicamentos programados</string>
+    <string name="calendar_no_meds_desc">No hay tomas para este día</string>
+    <string name="calendar_prev_month">Mes anterior</string>
+    <string name="calendar_next_month">Mes siguiente</string>
+    <string name="calendar_day_date_format">%1$d de %2$s</string>
+
+    <!-- STRINGS PARA NOTIFICACIONES -->
+    <string name="notification_default_med">Tu Medicamento</string>
+    <string name="notification_title">Hora de tu medicina</string>
+    <string name="notification_content">Es momento de tomar: %1$s (%2$s) - %3$s</string>
+    <string name="notification_action_snooze">Posponer</string>
+    <string name="notification_action_take">Tomar</string>
+    <string name="notification_channel_name">Recordatorios de Medicamentos</string>
+    <string name="notification_channel_desc">Notificaciones para recordar tomar medicamentos</string>
+
+    <!-- STRINGS PARA HISTORYSCREEN AVANZADO -->
+    <string name="history_search_placeholder">Buscar por nombre...</string>
+    <string name="history_filter_status">Estado</string>
+    <string name="history_date_range">Rango de fechas</string>
+    <string name="history_date_from">Desde</string>
+    <string name="history_date_to">Hasta</string>
+    <string name="history_clear_filters">Limpiar filtros</string>
 
 </resources>

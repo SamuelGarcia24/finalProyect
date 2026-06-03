@@ -108,8 +108,8 @@ fun SettingsScreen(
                     Text(text = stringResource(id = R.string.settings_language), style = MaterialTheme.typography.bodyLarge)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LanguageButton("Español", currentLang == "es") { settingsViewModel.changeLanguage("es") }
-                    LanguageButton("Inglés", currentLang == "en") { settingsViewModel.changeLanguage("en") }
+                    LanguageButton(stringResource(id = R.string.lang_es), currentLang == "es") { settingsViewModel.changeLanguage("es") }
+                    LanguageButton(stringResource(id = R.string.lang_en), currentLang == "en") { settingsViewModel.changeLanguage("en") }
                 }
             }
         }
@@ -130,7 +130,7 @@ fun SettingsScreen(
         item {
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "Notificaciones Avanzadas",
+                text = stringResource(id = R.string.settings_advanced_notifications),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -140,7 +140,7 @@ fun SettingsScreen(
         // Do Not Disturb Toggle
         item {
             SettingItem(
-                title = "Silencio Automático",
+                title = stringResource(id = R.string.settings_auto_silence),
                 icon = Icons.Default.Schedule,
                 hasSwitch = true,
                 checked = doNotDisturbEnabled
@@ -158,7 +158,7 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Horario sin notificaciones",
+                            text = stringResource(id = R.string.settings_dnd_range),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -169,13 +169,13 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             TimePickerField(
-                                label = "Desde",
+                                label = stringResource(id = R.string.settings_from),
                                 value = doNotDisturbStart,
                                 onValueChange = { settingsViewModel.updateDoNotDisturbStart(it) },
                                 modifier = Modifier.weight(1f)
                             )
                             TimePickerField(
-                                label = "Hasta",
+                                label = stringResource(id = R.string.settings_to),
                                 value = doNotDisturbEnd,
                                 onValueChange = { settingsViewModel.updateDoNotDisturbEnd(it) },
                                 modifier = Modifier.weight(1f)
@@ -183,7 +183,7 @@ fun SettingsScreen(
                         }
 
                         Text(
-                            text = "Ejemplo: Sin notificaciones de $doNotDisturbStart a $doNotDisturbEnd",
+                            text = stringResource(id = R.string.settings_dnd_example, doNotDisturbStart, doNotDisturbEnd),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 8.dp)
@@ -201,7 +201,7 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Intervalo de Posponer",
+                        text = stringResource(id = R.string.settings_snooze_interval),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -209,7 +209,7 @@ fun SettingsScreen(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         listOf(5, 10, 15, 30).forEach { minutes ->
@@ -222,7 +222,7 @@ fun SettingsScreen(
                         }
                     }
                     Text(
-                        text = "Las notificaciones se pospondrán $snoozeIntervalMinutes minutos",
+                        text = stringResource(id = R.string.settings_snooze_desc, snoozeIntervalMinutes),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 8.dp)
@@ -251,11 +251,20 @@ fun LanguageButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent),
+        border = BorderStroke(
+            1.dp, 
+            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        ),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+        ),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray)
+        Text(
+            text = label, 
+            style = MaterialTheme.typography.bodyMedium, 
+            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -330,7 +339,7 @@ fun TimePickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Seleccionar hora") },
+        title = { Text(stringResource(id = R.string.settings_select_time)) },
         text = {
             Column(
                 modifier = Modifier
@@ -348,7 +357,7 @@ fun TimePickerDialog(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Hora", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(id = R.string.settings_hour), style = MaterialTheme.typography.bodySmall)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center,
@@ -382,7 +391,7 @@ fun TimePickerDialog(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Minuto", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(id = R.string.settings_minute), style = MaterialTheme.typography.bodySmall)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center,
@@ -416,12 +425,12 @@ fun TimePickerDialog(
                 val timeString = String.format("%02d:%02d", hour.value, minute.value)
                 onConfirm(timeString)
             }) {
-                Text("Confirmar")
+                Text(stringResource(id = R.string.btn_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(stringResource(id = R.string.btn_cancel))
             }
         }
     )

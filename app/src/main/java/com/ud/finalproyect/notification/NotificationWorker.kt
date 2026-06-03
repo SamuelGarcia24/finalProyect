@@ -22,12 +22,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-/**
- * Worker para garantizar entrega de notificaciones de medicamentos
- * - Reintentos automáticos si falla initially
- * - Exponential backoff (1 min, 2 min, 4 min, etc.)
- * - Garantiza que la notificación se muestre aunque el sistema falle
- */
 class NotificationWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
 
     override fun doWork(): Result {
@@ -56,7 +50,6 @@ class NotificationWorker(context: Context, params: WorkerParameters) : Worker(co
 
             Result.success()
         } catch (e: Exception) {
-            // Retry with exponential backoff (max 3 retries)
             if (runAttemptCount < 3) {
                 Result.retry()
             } else {
@@ -76,7 +69,6 @@ class NotificationWorker(context: Context, params: WorkerParameters) : Worker(co
     ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Convert ISO time to friendly format (hh:mm a)
         val friendlyTime = try {
             LocalTime.parse(notificationTime)
                 .format(DateTimeFormatter.ofPattern("hh:mm a", Locale.getDefault()))
@@ -95,7 +87,6 @@ class NotificationWorker(context: Context, params: WorkerParameters) : Worker(co
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Create Snooze action
         val snoozeAction = NotificationActionReceiver.createSnoozeActionIntent(
             context,
             requestCode,
@@ -106,7 +97,6 @@ class NotificationWorker(context: Context, params: WorkerParameters) : Worker(co
             notificationDate
         )
 
-        // Create Confirm action (include notificationTime)
         val confirmAction = NotificationActionReceiver.createConfirmActionIntent(
             context,
             requestCode,

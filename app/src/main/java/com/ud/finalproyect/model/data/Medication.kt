@@ -20,6 +20,5 @@ data class Medication(
     var isActive: Boolean = true,
     val status: String = "Pendiente",
     val takenDates: List<String> = emptyList(),
-    // Mapa de fecha -> hora real de toma (ej: {"2026-06-02": "14:35", "2026-06-03": "14:50"})
     val actualTakenTimes: Map<String, String> = emptyMap()
 )

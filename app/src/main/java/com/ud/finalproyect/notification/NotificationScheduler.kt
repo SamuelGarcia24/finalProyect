@@ -14,6 +14,8 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
+import com.ud.finalproyect.R
+
 class NotificationScheduler(private val context: Context) {
 
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -21,20 +23,17 @@ class NotificationScheduler(private val context: Context) {
 
     companion object {
         const val CHANNEL_ID = "medication_reminder_channel"
-        const val CHANNEL_NAME = "Recordatorios de Medicamentos"
-        const val CHANNEL_DESCRIPTION = "Notificaciones para recordar tomar medicamentos"
         const val ACTION_SCHEDULE_MEDICATION_REMINDER = "com.ud.finalproyect.SCHEDULE_MEDICATION_REMINDER"
     }
 
     fun createNotificationChannel() {
-        // minSdk is 26, so this check is technically not needed but good practice
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                CHANNEL_NAME,
+                context.getString(R.string.notification_channel_name),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = CHANNEL_DESCRIPTION
+                description = context.getString(R.string.notification_channel_desc)
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -74,8 +73,6 @@ class NotificationScheduler(private val context: Context) {
                 }
                 medication.intervalHours % 24 == 0 && medication.intervalHours > 0 -> {
                     val daysInterval = medication.intervalHours / 24
-                    // DAILY or WEEKLY frequency (treated as daily increment for simplicity in scheduling loop)
-                    // Schedule one alarm for the start time of the day
                     val notificationTimeMillis = getNotificationTimeMillis(
                         currentNotificationDate,
                         startTime
@@ -87,14 +84,12 @@ class NotificationScheduler(private val context: Context) {
                             currentNotificationDate,
                             startTime,
                             notificationTimeMillis,
-                            // Unique request code: medicationId + date
                             medication.id.hashCode() + currentNotificationDate.toEpochDay().toInt()
                         )
                     }
-                    currentNotificationDate = currentNotificationDate.plusDays(daysInterval.toLong() - 1) // -1 because loop increments by 1 at the end
+                    currentNotificationDate = currentNotificationDate.plusDays(daysInterval.toLong() - 1)
                 }
                 else -> {
-                    // Treat as a single dose for the duration if frequency is unknown or 0
                     val notificationTimeMillis = getNotificationTimeMillis(
                         currentNotificationDate,
                         startTime
@@ -243,13 +238,11 @@ class NotificationScheduler(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingIntent)
-        // Also cancel any WorkManager backup scheduled for this requestCode
         try {
             WorkManager.getInstance(context).cancelUniqueWork("medication_notification_$requestCode")
         } catch (e: Exception) {
             // ignore
         }
-        // Also cancel potential snooze alarm/work (uses requestCode + 10000)
         try {
             val snoozePending = PendingIntent.getBroadcast(
                 context,
@@ -264,7 +257,6 @@ class NotificationScheduler(private val context: Context) {
         try {
             WorkManager.getInstance(context).cancelUniqueWork("medication_notification_${requestCode + 10000}")
         } catch (e: Exception) {
-            // ignore
         }
     }
 

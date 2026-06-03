@@ -39,20 +39,16 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         when (action) {
             ACTION_SNOOZE -> {
-                // Dismiss current notification
                 notificationManager.cancel(notificationId)
 
-                // Get current actual time
                 val currentActualTime = LocalTime.now()
                     .format(DateTimeFormatter.ofPattern("HH:mm"))
 
-                // Update status and actual time in medication repository
                 CoroutineScope(Dispatchers.IO).launch {
                     val snoozeUntil = System.currentTimeMillis() + SNOOZE_DURATION_MILLIS
                     repository.snoozeNotification(logId, snoozeUntil)
 
                     // Actualizar la hora real de posponer en el repositorio
-                    // Use notification time to store per-dose actual taken time key
                     val notificationTime = intent.getStringExtra("NOTIFICATION_TIME") ?: ""
                     medicationRepository.updateActualTakenTime(
                         medicationId,
@@ -99,7 +95,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
             }
 
             ACTION_SNOOZE_ALARM -> {
-                // Show notification again after snooze
                 val mainIntent = Intent(context, com.ud.finalproyect.MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }

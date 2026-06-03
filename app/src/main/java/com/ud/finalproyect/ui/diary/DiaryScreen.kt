@@ -2,6 +2,7 @@ package com.ud.finalproyect.ui.diary
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 // ...existing code...
+import androidx.compose.ui.res.stringResource
+import com.ud.finalproyect.R
 import com.ud.finalproyect.model.data.ScheduledDose
 import com.ud.finalproyect.viewmodel.CalendarViewModel
 import com.ud.finalproyect.viewmodel.DiaryViewModel
@@ -29,6 +32,8 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.LocalDate
+import androidx.compose.ui.platform.LocalConfiguration
+import java.time.format.TextStyle
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -42,6 +47,7 @@ fun DiaryScreen(
 
     val days = remember { (-3..3).map { LocalDate.now().plusDays(it.toLong()) } }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val locale = LocalConfiguration.current.locales[0]
 
     LaunchedEffect(userId) {
         if (userId.isNotEmpty()) viewModel.loadForUser(userId)
@@ -83,15 +89,15 @@ fun DiaryScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = date.month.name.take(3),
+                            text = date.month.getDisplayName(TextStyle.SHORT, locale),
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) Color.White else Color.Gray
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = date.dayOfMonth.toString(),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -106,8 +112,8 @@ fun DiaryScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No medications for this day",
-                    color = Color.Gray
+                    text = stringResource(id = R.string.diary_no_meds),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         } else {
@@ -192,13 +198,20 @@ fun DiaryDoseItem(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = dose.medicationName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(text = dose.dose, color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                    Text(text = dose.dose, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                     if (isAlreadyTaken) {
-                        Text(text = "Tomado: ${dose.actualTime}", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                        Text(text = stringResource(id = R.string.diary_taken_at, dose.actualTime!!), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
                     }
                 }
 
                 val canMark = !isAlreadyTaken && isWithinWindow(scheduledTime, date)
+                val statusColor = if (isAlreadyTaken) {
+                    if (isSystemInDarkTheme()) Color(0xFF8CF39A) else Color(0xFF2E7D32)
+                } else if (canMark) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.outline
+                }
 
                 IconButton(
                     onClick = {
@@ -217,8 +230,8 @@ fun DiaryDoseItem(
                 ) {
                     Icon(
                         imageVector = if (isAlreadyTaken) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                        contentDescription = "Mark as taken",
-                        tint = if (isAlreadyTaken) Color.Green else if (canMark) MaterialTheme.colorScheme.primary else Color.LightGray,
+                        contentDescription = stringResource(id = R.string.diary_mark_as_taken),
+                        tint = statusColor,
                         modifier = Modifier.size(36.dp)
                     )
                 }
