@@ -151,30 +151,38 @@ class CalendarViewModel : ViewModel() {
 
                                 while (!currentDateTime.isAfter(endOfSelectedDay)) {
                                     if (currentDateTime.toLocalDate() == date) {
+                                        val formattedTime = currentDateTime.toLocalTime().format(outputFormatter)
+                                        val isoTime = currentDateTime.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+                                        val perDoseKey = "${date}|${isoTime}"
+                                        val actual = med.actualTakenTimes?.get(perDoseKey) ?: med.actualTakenTimes?.get(date.toString())
                                         doses.add(
                                             ScheduledDose(
                                                 medicationName = med.name,
-                                                time = currentDateTime.toLocalTime().format(outputFormatter),
-                                                dose = med.dose
+                                                medicationId = med.id,
+                                                time = formattedTime,
+                                                dose = med.dose,
+                                                actualTime = actual
                                             )
                                         )
                                     }
                                     currentDateTime = currentDateTime.plusHours(med.intervalHours.toLong())
                                     // Evitar bucle infinito si por error llega un intervalo de 0
-                                    if (med.intervalHours == 0) break 
+                                    if (med.intervalHours == 0) break
                                 }
-                            } else {
-                                doses.add(ScheduledDose(med.name, friendlyTime, med.dose))
-                            }
+                             } else {
+                                 val actualSimple = med.actualTakenTimes?.get(date.toString())
+                                 doses.add(ScheduledDose(med.name, med.id, friendlyTime, med.dose, actualTime = actualSimple))
+                             }
                         }
                         FrequencyType.DAILY, FrequencyType.WEEKLY -> {
-                            if (shouldTakeMedicationOnDate(med, date, startDate)) {
-                                doses.add(ScheduledDose(med.name, friendlyTime, med.dose))
-                            }
+                                if (shouldTakeMedicationOnDate(med, date, startDate)) {
+                                    val actualSimple2 = med.actualTakenTimes?.get(date.toString())
+                                    doses.add(ScheduledDose(med.name, med.id, friendlyTime, med.dose, actualTime = actualSimple2))
+                                }
                         }
                         FrequencyType.UNKNOWN -> {
                             if (date == startDate) {
-                                doses.add(ScheduledDose(med.name, friendlyTime, med.dose))
+                                doses.add(ScheduledDose(med.name, med.id, friendlyTime, med.dose))
                             }
                         }
                     }

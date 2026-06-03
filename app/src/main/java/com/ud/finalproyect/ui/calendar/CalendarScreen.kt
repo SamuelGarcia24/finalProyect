@@ -348,10 +348,25 @@ fun MedicationDoseCard(dose: ScheduledDose) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Hora
+                    // Hora - mostrar hora real si existe y es diferente
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Icon(imageVector = Icons.Default.AccessTime, contentDescription = "Hora", modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(text = dose.time, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Column {
+                            Text(
+                                text = dose.time,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            // Mostrar hora real si es diferente de la programada
+                            if (dose.actualTime != null && dose.actualTime != dose.time) {
+                                Text(
+                                    text = "Tomado: ${dose.actualTime}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
                     }
                     // Dosis
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -361,12 +376,17 @@ fun MedicationDoseCard(dose: ScheduledDose) {
                 }
             }
 
-            // Indicador visual de estado
+            // Indicador visual de estado - diferente color si fue pospuesto
             Box(
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
+                    .background(
+                        if (dose.actualTime != null && dose.actualTime.contains("Pospuesto"))
+                            MaterialTheme.colorScheme.secondary
+                        else
+                            MaterialTheme.colorScheme.primary
+                    )
             )
         }
     }

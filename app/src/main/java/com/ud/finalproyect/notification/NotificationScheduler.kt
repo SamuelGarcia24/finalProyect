@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.work.WorkManager
 import com.ud.finalproyect.model.data.Medication
 import java.time.LocalDate
 import java.time.LocalTime
@@ -172,19 +173,51 @@ class NotificationScheduler(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
-                pendingIntent
-            )
-        } else {
-            alarmManager.setExact(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
-                pendingIntent
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMillis,
+                    pendingIntent
+                )
+            }
+        } catch (e: Exception) {
+            // If AlarmManager fails, use WorkManager as fallback
+            val delayMillis = triggerAtMillis - System.currentTimeMillis()
+            val delayMinutes = (delayMillis / (1000 * 60)).coerceAtLeast(0)
+
+            NotificationWorker.schedule(
+                context,
+                medication.name,
+                medication.dose,
+                medication.id,
+                notificationTime.toString(),
+                notificationDate.toString(),
+                requestCode,
+                delayMinutes
             )
         }
+
+        // Also schedule with WorkManager as backup for maximum reliability
+        val delayMillis = triggerAtMillis - System.currentTimeMillis()
+        val delayMinutes = (delayMillis / (1000 * 60)).coerceAtLeast(0)
+
+        NotificationWorker.schedule(
+            context,
+            medication.name,
+            medication.dose,
+            medication.id,
+            notificationTime.toString(),
+            notificationDate.toString(),
+            requestCode,
+            delayMinutes
+        )
     }
 
     private fun cancelAlarm(
@@ -210,6 +243,29 @@ class NotificationScheduler(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingIntent)
+        // Also cancel any WorkManager backup scheduled for this requestCode
+        try {
+            WorkManager.getInstance(context).cancelUniqueWork("medication_notification_$requestCode")
+        } catch (e: Exception) {
+            // ignore
+        }
+        // Also cancel potential snooze alarm/work (uses requestCode + 10000)
+        try {
+            val snoozePending = PendingIntent.getBroadcast(
+                context,
+                requestCode + 10000,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.cancel(snoozePending)
+        } catch (e: Exception) {
+            // ignore
+        }
+        try {
+            WorkManager.getInstance(context).cancelUniqueWork("medication_notification_${requestCode + 10000}")
+        } catch (e: Exception) {
+            // ignore
+        }
     }
 
     private fun getNotificationTimeMillis(date: LocalDate, time: LocalTime): Long {

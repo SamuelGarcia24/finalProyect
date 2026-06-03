@@ -7,12 +7,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import com.ud.finalproyect.notification.NotificationScheduler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import com.ud.finalproyect.R
 import com.ud.finalproyect.model.data.Medication
 import com.ud.finalproyect.viewmodel.HomeViewModel
 
@@ -37,12 +41,14 @@ fun HomeScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "Medications today",
+            text = stringResource(id = R.string.home_title),
             fontSize = 22.sp,
             color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(12.dp))
+
+        val context = LocalContext.current
 
         if (medications.isEmpty()) {
             Box(
@@ -50,7 +56,7 @@ fun HomeScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No medications for today",
+                    text = stringResource(id = R.string.home_no_meds),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -62,7 +68,15 @@ fun HomeScreen(
                 items(medications) { medication ->
                     MedicationItem(
                         medication = medication,
-                        onDelete = { viewModel.deleteMedication(medication.id) }
+                        onDelete = {
+                            // Cancel scheduled reminders for this medication before deleting
+                            try {
+                                NotificationScheduler(context).cancelMedicationReminder(medication)
+                            } catch (e: Exception) {
+                                // Ignore cancellation errors but proceed to delete
+                            }
+                            viewModel.deleteMedication(medication.id)
+                        }
                     )
                 }
             }
@@ -73,7 +87,7 @@ fun HomeScreen(
                 onClick = { navController.navigate("Diary") },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("See details")
+                Text(text = stringResource(id = R.string.home_btn_details))
             }
         }
     }
@@ -93,8 +107,7 @@ fun MedicationItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -109,39 +122,16 @@ fun MedicationItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier.weight(1f)
+
+            IconButton(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.size(36.dp)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = medication.startTime,
-                            fontSize = 16.sp
-                        )
-                        Text(
-                            text = medication.status,
-                            fontSize = 14.sp,
-                            color = if (medication.status == "Tomado")
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(
-                        onClick = { showDeleteDialog = true },
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete medication",
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(id = R.string.home_ic_delete_desc),
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -150,8 +140,8 @@ fun MedicationItem(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Eliminar medicamento") },
-            text = { Text("¿Estás seguro de que deseas eliminar \"${medication.name}\"?") },
+            title = { Text(text = stringResource(id = R.string.home_delete_title)) },
+            text = { Text(text = stringResource(id = R.string.home_delete_confirm, medication.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -162,12 +152,12 @@ fun MedicationItem(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Eliminar")
+                    Text(text = stringResource(id = R.string.home_delete_action))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancelar")
+                    Text(text = stringResource(id = R.string.home_cancel_action))
                 }
             }
         )

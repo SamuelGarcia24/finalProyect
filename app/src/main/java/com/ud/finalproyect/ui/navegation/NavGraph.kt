@@ -28,6 +28,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.res.stringResource
+import com.ud.finalproyect.R
 import com.ud.finalproyect.ui.addmedication.AddMedicationScreen
 import com.ud.finalproyect.ui.auth.LoginScreen
 import com.ud.finalproyect.ui.calendar.CalendarScreen
@@ -37,16 +39,17 @@ import com.ud.finalproyect.ui.home.HomeScreen
 import com.ud.finalproyect.ui.settings.SettingsScreen
 import com.ud.finalproyect.viewmodel.AuthViewModel
 
+// Se cambia title: String por titleResId: Int para soportar traducciones dinámicas
 sealed class Screen(
     val route: String,
-    val title: String,
+    val titleResId: Int,
     val icon: ImageVector
 ) {
-    object Home : Screen("Home", "Home", Icons.Default.Home)
-    object Diary : Screen("Diary", "Diary", Icons.Default.Today)
-    object Calendar : Screen("Calendar", "Calendar", Icons.Default.CalendarMonth)
-    object History : Screen("Historial", "Historial", Icons.Default.History)
-    object Settings : Screen("Settings", "Settings", Icons.Default.Settings)
+    object Home : Screen("Home", R.string.nav_home, Icons.Default.Home)
+    object Diary : Screen("Diary", R.string.nav_diary, Icons.Default.Today)
+    object Calendar : Screen("Calendar", R.string.nav_calendar, Icons.Default.CalendarMonth)
+    object History : Screen("Historial", R.string.nav_history, Icons.Default.History)
+    object Settings : Screen("Settings", R.string.nav_settings, Icons.Default.Settings)
 }
 
 @Composable
@@ -208,6 +211,8 @@ fun MainScaffold(
                 edgePadding = 0.dp
             ) {
                 items.forEachIndexed { index, screen ->
+                    // Resuelve de forma reactiva la traducción de la pestaña actual
+                    val tabTitle = stringResource(id = screen.titleResId)
                     Tab(
                         selected = selectedIndex == index,
                         onClick = { onTabSelected(screen.route) },
@@ -215,10 +220,10 @@ fun MainScaffold(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = screen.icon,
-                                    contentDescription = screen.title,
+                                    contentDescription = tabTitle,
                                     modifier = Modifier.padding(end = 4.dp)
                                 )
-                                Text(screen.title)
+                                Text(text = tabTitle)
                             }
                         }
                     )
@@ -228,7 +233,10 @@ fun MainScaffold(
         floatingActionButton = {
             if (showFab) {
                 FloatingActionButton(onClick = onFabClick) {
-                    Icon(Icons.Default.Add, contentDescription = "Add medication")
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(id = R.string.nav_fab_add_desc)
+                    )
                 }
             }
         }

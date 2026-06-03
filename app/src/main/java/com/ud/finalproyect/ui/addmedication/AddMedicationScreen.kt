@@ -27,6 +27,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import android.app.Application
+import androidx.compose.ui.res.stringResource
+import com.ud.finalproyect.R
 import java.time.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,41 +41,40 @@ fun AddMedicationScreen(
     val context = LocalContext.current
     val application = context.applicationContext as Application
     val scrollState = rememberScrollState()
-    
+
     LaunchedEffect(Unit) {
         viewModel.init(application)
     }
 
     val calendarInstance = remember { Calendar.getInstance() }
     val timeFormatter = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
-    
+
     var name by remember { mutableStateOf("") }
     var doseValue by remember { mutableStateOf("") }
     var doseUnit by remember { mutableStateOf("mg") }
-    
+
     var frequencyValue by remember { mutableStateOf("") }
     var frequencyUnit by remember { mutableStateOf("Horas") }
     val frequencyUnits = listOf("Horas", "Días", "Semanas")
-    
-    // startText es para mostrar al usuario, startTimeValue es para la lógica interna (ISO)
+
     var startText by remember { mutableStateOf(timeFormatter.format(calendarInstance.time)) }
-    var startTimeValue by remember { 
+    var startTimeValue by remember {
         val now = LocalTime.now()
-        mutableStateOf(String.format("%02d:%02d", now.hour, now.minute)) 
+        mutableStateOf(String.format("%02d:%02d", now.hour, now.minute))
     }
-    
+
     var duration by remember { mutableStateOf("") }
 
-    val isFormValid = name.isNotBlank() && doseValue.isNotBlank() && 
-                      frequencyValue.isNotBlank() && duration.isNotBlank()
+    val isFormValid = name.isNotBlank() && doseValue.isNotBlank() &&
+            frequencyValue.isNotBlank() && duration.isNotBlank()
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Nuevo Medicamento", fontWeight = FontWeight.Bold) },
+                title = { Text(text = stringResource(id = R.string.add_med_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.add_med_back))
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -90,27 +91,27 @@ fun AddMedicationScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            InfoSection(title = "Información General") {
+            InfoSection(title = stringResource(id = R.string.add_med_info_general)) {
                 CustomTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = "Nombre del medicamento",
+                    label = stringResource(id = R.string.add_med_name_label),
                     icon = Icons.Default.Medication,
-                    placeholder = "Ej: Ibuprofeno"
+                    placeholder = stringResource(id = R.string.add_med_name_placeholder)
                 )
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     CustomTextField(
                         value = doseValue,
                         onValueChange = { if (it.all { char -> char.isDigit() }) doseValue = it },
-                        label = "Dosis",
+                        label = stringResource(id = R.string.med_dose),
                         icon = Icons.Default.Scale,
                         modifier = Modifier.weight(1f),
                         keyboardType = KeyboardType.Number
                     )
-                    
+
                     var expanded by remember { mutableStateOf(false) }
                     Box(modifier = Modifier.padding(top = 8.dp)) {
                         FilterChip(
@@ -130,7 +131,7 @@ fun AddMedicationScreen(
                 }
             }
 
-            InfoSection(title = "Configuración de Horarios") {
+            InfoSection(title = stringResource(id = R.string.add_med_schedule_config)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -139,24 +140,38 @@ fun AddMedicationScreen(
                     CustomTextField(
                         value = frequencyValue,
                         onValueChange = { if (it.all { char -> char.isDigit() }) frequencyValue = it },
-                        label = "Cada cuanto",
+                        label = stringResource(id = R.string.add_med_frequency_label),
                         icon = Icons.Default.Update,
                         modifier = Modifier.weight(1f),
                         keyboardType = KeyboardType.Number,
-                        placeholder = "Ej: 8"
+                        placeholder = stringResource(id = R.string.add_med_frequency_placeholder)
                     )
-                    
+
+                    // Traducción visual para el chip sin cambiar la variable técnica interna
+                    val translatedFrequencyUnit = when(frequencyUnit) {
+                        "Horas" -> stringResource(id = R.string.unit_hours)
+                        "Días" -> stringResource(id = R.string.unit_days)
+                        "Semanas" -> stringResource(id = R.string.unit_weeks)
+                        else -> frequencyUnit
+                    }
+
                     var unitExpanded by remember { mutableStateOf(false) }
                     Box(modifier = Modifier.padding(top = 8.dp)) {
                         FilterChip(
                             selected = true,
                             onClick = { unitExpanded = true },
-                            label = { Text(frequencyUnit) },
+                            label = { Text(translatedFrequencyUnit) },
                             trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) }
                         )
                         DropdownMenu(expanded = unitExpanded, onDismissRequest = { unitExpanded = false }) {
                             frequencyUnits.forEach { unit ->
-                                DropdownMenuItem(text = { Text(unit) }, onClick = {
+                                val translatedItem = when(unit) {
+                                    "Horas" -> stringResource(id = R.string.unit_hours)
+                                    "Días" -> stringResource(id = R.string.unit_days)
+                                    "Semanas" -> stringResource(id = R.string.unit_weeks)
+                                    else -> unit
+                                }
+                                DropdownMenuItem(text = { Text(translatedItem) }, onClick = {
                                     frequencyUnit = unit; unitExpanded = false
                                 })
                             }
@@ -167,12 +182,12 @@ fun AddMedicationScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 TimePickerField(
-                    label = "Hora de la primera toma",
+                    label = stringResource(id = R.string.add_med_first_take),
                     value = startText,
                     icon = Icons.Default.AccessTime,
                     onClick = {
                         val calendar = Calendar.getInstance()
-                        TimePickerDialog(context, { _, h, m -> 
+                        TimePickerDialog(context, { _, h, m ->
                             startTimeValue = String.format("%02d:%02d", h, m)
                             val selectedCal = Calendar.getInstance()
                             selectedCal.set(Calendar.HOUR_OF_DAY, h)
@@ -183,18 +198,27 @@ fun AddMedicationScreen(
                 )
             }
 
-            InfoSection(title = "Duración del Tratamiento") {
+            InfoSection(title = stringResource(id = R.string.add_med_duration_section)) {
                 CustomTextField(
                     value = duration,
                     onValueChange = { if (it.all { char -> char.isDigit() }) duration = it },
-                    label = "Número de días",
+                    label = stringResource(id = R.string.add_med_duration_label),
                     icon = Icons.Default.CalendarToday,
-                    placeholder = "Ej: 7",
+                    placeholder = stringResource(id = R.string.add_med_duration_placeholder),
                     keyboardType = KeyboardType.Number
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            // Textos dinámicos para construir el string que va a la BD según el idioma actual
+            val prefixEvery = stringResource(id = R.string.prefix_every)
+            val unitLabel = when(frequencyUnit) {
+                "Horas" -> stringResource(id = R.string.unit_hours).lowercase()
+                "Días" -> stringResource(id = R.string.unit_days).lowercase()
+                "Semanas" -> stringResource(id = R.string.unit_weeks).lowercase()
+                else -> frequencyUnit.lowercase()
+            }
 
             Button(
                 onClick = {
@@ -204,7 +228,7 @@ fun AddMedicationScreen(
                         "Semanas" -> fVal * 24 * 7
                         else -> fVal
                     }
-                    val frequencyString = "Cada $frequencyValue ${frequencyUnit.lowercase()}"
+                    val frequencyString = "$prefixEvery $frequencyValue $unitLabel"
 
                     viewModel.saveMedication(
                         application = application,
@@ -215,7 +239,7 @@ fun AddMedicationScreen(
                         frequency = frequencyString,
                         intervalHours = totalHours,
                         intervalMinutes = 0,
-                        startTime = startTimeValue, // Usamos el valor ISO para evitar el crash
+                        startTime = startTimeValue,
                         durationDays = duration.toIntOrNull() ?: 1
                     )
                     navController.popBackStack()
@@ -229,7 +253,7 @@ fun AddMedicationScreen(
             ) {
                 Icon(Icons.Default.Save, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Guardar Medicamento", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(id = R.string.add_med_btn_save), fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

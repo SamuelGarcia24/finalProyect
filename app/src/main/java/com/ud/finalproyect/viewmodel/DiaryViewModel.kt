@@ -37,6 +37,17 @@ class DiaryViewModel(private val userId: String = "") : ViewModel() {
         }
     }
 
+    // Marca una toma real guardando la hora en el mapa actualTakenTimes.
+    // scheduledTime debe ser la hora en formato HH:mm (24h) que identifica la dosis.
+    fun markTaken(medicationId: String, date: String, scheduledTime: String, actualTime: String) {
+        repository.updateActualTakenTime(medicationId, date, actualTime, scheduledTime)
+    }
+
+    // Desmarca (elimina) una toma guardada para una dosis específica
+    fun unmarkTaken(medicationId: String, date: String, scheduledTime: String) {
+        repository.removeActualTakenTime(medicationId, date, scheduledTime)
+    }
+
     fun toggleTaken(medicationId: String, date: String) {
         val medication = _medications.value.find { it.id == medicationId } ?: return
         repository.toggleTaken(medicationId, date, medication.takenDates)
